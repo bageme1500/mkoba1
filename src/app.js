@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import userRoutes from './modules/users/user.routes.js';
+import planRoutes from './modules/contributionPlan/plan.routes.js';
 
 const app = express();
 app.use(express.json());
@@ -14,5 +15,6 @@ app.use(cors(corsOptions));
 
 
 app.use('/users', userRoutes);
+app.use('/plan', planRoutes);
 
 export default app;
