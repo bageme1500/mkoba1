@@ -1,19 +1,19 @@
-import * as User from './user.model.js';
+import { createUser, getAllUsers } from './user.model.js';
 
-export const create = async (req, res, next) => {
+export const create = async (req, res) => {
     try {
-        const user = await User.createUser(req.body);
+        const user = await createUser(req.body);
         res.status(201).json(user);
-
-    } catch (err) {
-        next(err);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 };
-export const getAll = async (req, res, next) => {
+
+export const getAll = async (req, res) => {
     try {
-        const users = await User.getAllUsers();
-        res.status(200).json(users);
-    } catch (err) {
-        next(err);
+        const users = await getAllUsers();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };

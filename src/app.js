@@ -3,7 +3,7 @@ import cors from 'cors';
 import userRoutes from './modules/users/user.routes.js';
 
 const app = express();
-
+app.use(express.json());
 
 const corsOptions = {
     origin: 'http://localhost:3000',
@@ -11,8 +11,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
 
-app.use('/api/users', userRoutes);
+
+app.use('/users', userRoutes);
 
 export default app;
