@@ -24,4 +24,17 @@ Content-Type: application/json
 }
 
 ###
-GET http://localhost:3000/plan/plan
+GET http://localhost:3000/plan
+
+###
+POST http://localhost:3000/contribution
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "required_amount": 1000.00,
+  "month": "january"
+}
+
+###
+GET http://localhost:3000/contribution
