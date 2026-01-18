@@ -38,3 +38,20 @@ Content-Type: application/json
 
 ###
 GET http://localhost:3000/contribution
+
+
+###
+POST http://localhost:3000/payment
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "contribution_id": 1,
+  "amount": 50.00,
+  "date": "2025-01-05",
+  "method": "cash",
+  "reference": "RCPT-001"
+}
+
+###
+GET http://localhost:3000/payment
