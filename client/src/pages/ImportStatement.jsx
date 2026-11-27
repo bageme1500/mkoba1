@@ -12,6 +12,7 @@ const FIELDS = [
     { key: 'reference', label: 'Reference / receipt', hint: 'Stops the same payment being recorded twice' },
     { key: 'phone', label: 'Phone number', hint: 'Optional: phones inside other columns are found too' },
     { key: 'name', label: 'Payer name / details', hint: 'Used when there is no phone number' },
+    { key: 'withdrawn', label: 'Money out (withdrawn)', hint: 'Withdrawals and charges go to the cash book for approval' },
 ];
 
 const STATUS = {
@@ -20,6 +21,7 @@ const STATUS = {
     duplicate: ['Already recorded', 'bg-white/10 text-slate-300'],
     invalid: ['Could not read', 'bg-rose-400/15 text-rose-200'],
     skipped: ['Skipped', 'bg-white/10 text-slate-400'],
+    cashbook: ['Sent to cash book', 'bg-sky-400/15 text-sky-200'],
 };
 
 export default function ImportStatement() {
@@ -167,6 +169,7 @@ export default function ImportStatement() {
                                     <p className="text-xs text-slate-400">
                                         {dateLabel(i.created_at)} by {i.uploaded_by_name || 'unknown'} · {i.matched_rows} recorded
                                         {i.unmatched_rows > 0 && <span className="text-amber-300"> · {i.unmatched_rows} need a member</span>}
+                                        {i.cashbook_rows > 0 && <span className="text-sky-300"> · {i.cashbook_rows} to cash book</span>}
                                     </p>
                                 </div>
                                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => openImport(i.id)}>
@@ -191,12 +194,13 @@ function ImportResult({ result, onChange }) {
     return (
         <section className="card mb-6">
             <h2 className="font-semibold">Result: {result.filename}</h2>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-5">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:grid-cols-6">
                 {[
                     ['matched', result.matched_rows],
                     ['unmatched', result.unmatched_rows],
                     ['duplicate', result.duplicate_rows],
                     ['invalid', result.invalid_rows],
+                    ['cashbook', result.cashbook_rows],
                     ['skipped', result.skipped_rows],
                 ].map(([status, n]) => (
                     <button key={status} type="button" onClick={() => setShow(status)} className={`rounded-lg px-3 py-2 text-left ${STATUS[status][1]} ${show === status ? 'ring-2 ring-brand-400' : ''}`}>

@@ -69,6 +69,7 @@ describe('readStatement', () => {
             amount: 'Paid In',
             reference: 'Receipt No.',
             name: 'Details',
+            withdrawn: 'Withdrawn',
         });
     });
 

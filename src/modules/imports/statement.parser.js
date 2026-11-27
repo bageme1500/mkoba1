@@ -108,6 +108,7 @@ const GUESSES = {
     reference: [/receipt/i, /reference|ref\b|transaction id|code/i],
     phone: [/phone|msisdn|mobile|namba/i],
     name: [/other party|sender|payer/i, /^name|jina/i, /details|description/i],
+    withdrawn: [/withdrawn|withdrawal|paid out|debit/i],
 };
 
 export function suggestMapping(headers) {

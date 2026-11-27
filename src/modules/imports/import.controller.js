@@ -14,6 +14,7 @@ const mappingSchema = z.object({
     phone: column,
     name: column,
     reference: column,
+    withdrawn: column,
 });
 const assignSchema = z.object({ user_id: id, period: period.optional() });
 
@@ -59,7 +60,7 @@ export async function create(req, res) {
 
     const importId = await Imports.importStatement({
         groupId,
-        uploadedBy: req.user.id,
+        req,
         filename: req.file.originalname,
         parsed,
         mapping,
@@ -97,12 +98,12 @@ export async function assignRow(req, res) {
         if (!due) throw badRequest(`${member.name} has no ${data.period.slice(0, 7)} month yet`);
         dueId = due.id;
     }
-    await Imports.assignRow(row, { userId: member.id, dueId, recordedBy: req.user.id });
+    await Imports.assignRow(row, { userId: member.id, dueId, req });
     res.json(await Imports.getImport(row.import_id));
 }
 
 export async function skipRow(req, res) {
     const row = await loadUnmatchedRow(req);
-    await Imports.skipRow(row);
+    await Imports.skipRow(row, req);
     res.json(await Imports.getImport(row.import_id));
 }

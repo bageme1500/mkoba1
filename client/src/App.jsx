@@ -12,6 +12,7 @@ import YearlyReport from './pages/YearlyReport.jsx';
 import Members from './pages/Members.jsx';
 import MemberDetail from './pages/MemberDetail.jsx';
 import Settings from './pages/Settings.jsx';
+import CashBook from './pages/CashBook.jsx';
 import MyContributions from './pages/MyContributions.jsx';
 import Groups from './pages/Groups.jsx';
 
@@ -57,6 +58,7 @@ export default function App() {
                         <Route path="import" element={<ImportStatement />} />
                         <Route path="reports/monthly" element={<MonthlyReport />} />
                         <Route path="reports/yearly" element={<YearlyReport />} />
+                        <Route path="cashbook" element={<CashBook />} />
                         <Route path="members" element={<Members />} />
                         <Route path="members/:id" element={<MemberDetail />} />
                         <Route path="settings" element={<Settings />} />
