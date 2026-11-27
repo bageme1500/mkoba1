@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { CircleAlert, CircleCheck, Inbox, Info, TriangleAlert, X } from 'lucide-react';
 import { useApi } from './useApi.js';
+import { useT } from './i18n.jsx';
 
 // ---------- background ----------
 
@@ -29,9 +30,10 @@ const STATUS_STYLES = {
 };
 
 export function StatusBadge({ label, children }) {
+    const { t } = useT();
     return (
         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset ${STATUS_STYLES[label] || 'bg-white/10 text-slate-200 ring-white/20'}`}>
-            {children ?? label}
+            {children ?? t(label)}
         </span>
     );
 }
@@ -64,13 +66,14 @@ const NOTICE = {
 };
 
 export function Notice({ children, tone = 'success', onClose }) {
+    const { t } = useT();
     const [cls, Icon, iconCls] = NOTICE[tone];
     return (
         <div role="status" className={`flex items-start gap-2 rounded-xl border px-3 py-2 text-sm ${cls}`}>
             <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${iconCls}`} aria-hidden="true" />
             <div className="flex-1">{children}</div>
             {onClose && (
-                <button type="button" onClick={onClose} className="rounded p-0.5 opacity-70 hover:opacity-100" aria-label="Dismiss">
+                <button type="button" onClick={onClose} className="rounded p-0.5 opacity-70 hover:opacity-100" aria-label={t('Close')}>
                     <X className="h-4 w-4" />
                 </button>
             )}
@@ -84,10 +87,11 @@ export function Skeleton({ className = 'h-4 w-full' }) {
     return <div className={`skeleton ${className}`} />;
 }
 
-export function Loading({ label = 'Loading…', rows = 4 }) {
+export function Loading({ label, rows = 4 }) {
+    const { t } = useT();
     return (
         <div className="space-y-3 py-4" aria-busy="true">
-            <span className="sr-only">{label}</span>
+            <span className="sr-only">{label || t('Loading…')}</span>
             {Array.from({ length: rows }, (_, i) => (
                 <Skeleton key={i} className={`h-10 ${i % 2 ? 'w-11/12' : 'w-full'}`} />
             ))}
@@ -155,6 +159,7 @@ export function Stat({ label, value, hint, tone = 'default', icon: Icon }) {
 }
 
 export function Modal({ title, onClose, children }) {
+    const { t } = useT();
     useEffect(() => {
         const onKey = (e) => e.key === 'Escape' && onClose();
         window.addEventListener('keydown', onKey);
@@ -171,7 +176,7 @@ export function Modal({ title, onClose, children }) {
             >
                 <div className="mb-4 flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-white">{title}</h2>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close">
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={onClose} aria-label={t('Close')}>
                         <X className="h-4 w-4" />
                     </button>
                 </div>
@@ -192,12 +197,13 @@ export function Field({ label, hint, children }) {
 }
 
 // Dropdown of the group's active members.
-export function MemberSelect({ value, onChange, required = false, allowEmpty = false, emptyLabel = 'Choose member' }) {
+export function MemberSelect({ value, onChange, required = false, allowEmpty = false, emptyLabel }) {
+    const { t } = useT();
     const { data: members } = useApi('/users');
     return (
         <select className="input" value={value ?? ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : '')} required={required}>
             <option value="" disabled={!allowEmpty}>
-                {emptyLabel}
+                {emptyLabel || t('Choose member')}
             </option>
             {(members || []).map((m) => (
                 <option key={m.id} value={m.id}>
@@ -273,6 +279,7 @@ const ConfirmContext = createContext(null);
 
 // const confirm = useConfirm(); if (!(await confirm({ title, message }))) return;
 export function ConfirmProvider({ children }) {
+    const { t } = useT();
     const [dialog, setDialog] = useState(null);
     const confirm = useCallback(
         (opts) =>
@@ -289,14 +296,14 @@ export function ConfirmProvider({ children }) {
         <ConfirmContext.Provider value={confirm}>
             {children}
             {dialog && (
-                <Modal title={dialog.title || 'Are you sure?'} onClose={() => close(false)}>
+                <Modal title={dialog.title || t('Are you sure?')} onClose={() => close(false)}>
                     {dialog.message && <p className="text-sm text-slate-300">{dialog.message}</p>}
                     <div className="mt-5 flex justify-end gap-2">
                         <button type="button" className="btn btn-secondary" onClick={() => close(false)}>
-                            {dialog.cancelLabel || 'Cancel'}
+                            {dialog.cancelLabel || t('Cancel')}
                         </button>
                         <button type="button" autoFocus className={`btn ${dialog.tone === 'danger' ? 'btn-danger' : 'btn-primary'}`} onClick={() => close(true)}>
-                            {dialog.confirmLabel || 'Confirm'}
+                            {dialog.confirmLabel || t('Confirm')}
                         </button>
                     </div>
                 </Modal>

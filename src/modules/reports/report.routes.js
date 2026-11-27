@@ -7,6 +7,7 @@ reportRoutes.use(requireAuth, requireRole('admin', 'leader'));
 reportRoutes.get('/monthly', controller.monthly);
 reportRoutes.get('/yearly', controller.yearly);
 reportRoutes.get('/reminders', controller.reminders);
+reportRoutes.get('/trend', controller.trend);
 reportRoutes.get('/members/:id', controller.memberSummary);
 
 export const meRoutes = express.Router();

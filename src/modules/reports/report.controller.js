@@ -63,3 +63,10 @@ export async function memberSummary(req, res) {
     assertCanManageGroup(req.user, summary.group.id);
     res.json(summary);
 }
+
+const trendSchema = z.object({ months: z.coerce.number().int().min(3).max(36).default(12), group_id: id.optional() });
+
+export async function trend(req, res) {
+    const q = trendSchema.parse(req.query);
+    res.json(await Reports.trend(groupFor(req, q.group_id), q.months));
+}

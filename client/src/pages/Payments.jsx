@@ -6,6 +6,7 @@ import { Wallet } from 'lucide-react';
 import { Empty, ErrorBox, Field, Loading, MemberSelect, Modal, PageHeader, useAction, useConfirm, useToast } from '../components.jsx';
 import { dateLabel, money, monthEnd, thisMonth, todayIso } from '../format.js';
 import { ReceiptButtons } from '../receipts.jsx';
+import { useT } from '../i18n.jsx';
 
 const blank = (amount) => ({ user_id: '', amount, paid_at: todayIso(), method: 'mpesa', reference: '', period: '', note: '' });
 
@@ -21,7 +22,8 @@ function toBody(form) {
     };
 }
 
-function PaymentForm({ initial, submitLabel, onSubmit, busy, error }) {
+function PaymentForm({ initial, submitLabel, onSubmit, busy, error, rule }) {
+    const { t } = useT();
     const [form, setForm] = useState(initial);
     const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
     return (
@@ -32,36 +34,36 @@ function PaymentForm({ initial, submitLabel, onSubmit, busy, error }) {
                 onSubmit(form, () => setForm(blank(initial.amount)));
             }}
         >
-            <Field label="Member">
+            <Field label={t('Member')}>
                 <MemberSelect value={form.user_id} onChange={(v) => setForm((f) => ({ ...f, user_id: v }))} required />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Amount (TZS)">
+                <Field label={t('Amount (TZS)')}>
                     <input className="input" type="number" min="0.01" step="any" inputMode="decimal" value={form.amount} onChange={set('amount')} required />
                 </Field>
-                <Field label="Date paid">
+                <Field label={t('Date paid')}>
                     <input className="input" type="date" max={todayIso()} value={form.paid_at} onChange={set('paid_at')} required />
                 </Field>
-                <Field label="Method">
+                <Field label={t('Method')}>
                     <select className="input" value={form.method} onChange={set('method')}>
                         <option value="mpesa">M-Pesa</option>
-                        <option value="cash">Cash</option>
-                        <option value="bank">Bank</option>
+                        <option value="cash">{t('Cash')}</option>
+                        <option value="bank">{t('Bank')}</option>
                     </select>
                 </Field>
-                <Field label="Reference" hint="M-Pesa code or receipt no.">
-                    <input className="input uppercase" value={form.reference} onChange={set('reference')} placeholder="e.g. TKR1A2B3C4" />
+                <Field label={t('Reference')} hint={t('M-Pesa code or receipt no.')}>
+                    <input className="input uppercase" value={form.reference} onChange={set('reference')} placeholder={t('e.g. TKR1A2B3C4')} />
                 </Field>
-                <Field label="For month (optional)" hint="Empty = oldest unpaid month first">
+                <Field label={t('For month (optional)')} hint={rule === 'oldest_first' ? t('Empty = oldest unpaid month first') : t('Empty = the month it was paid in first')}>
                     <input className="input" type="month" value={form.period} onChange={set('period')} />
                 </Field>
-                <Field label="Note (optional)">
+                <Field label={t('Note (optional)')}>
                     <input className="input" value={form.note} onChange={set('note')} />
                 </Field>
             </div>
             <ErrorBox error={error} />
             <button className="btn btn-primary w-full sm:w-auto" disabled={busy}>
-                {busy ? 'Saving…' : submitLabel}
+                {busy ? t('Saving…') : submitLabel}
             </button>
         </form>
     );
@@ -81,12 +83,13 @@ export default function Payments() {
     const [editing, setEditing] = useState(null);
     const toast = useToast();
     const confirm = useConfirm();
+    const { t } = useT();
 
     const record = (form, reset) =>
         create.run(async () => {
             const p = await api('/payments', { method: 'POST', body: toBody(form) });
             const months = p.applied_to.map((a) => a.period).join(', ');
-            toast.success(`Saved ${money(p.amount, group.currency)} from ${p.member_name}${months ? ` (applied to ${months})` : ' (kept as credit)'}.`);
+            toast.success(months ? t('Saved {amount} from {name} (applied to {months}).', { amount: money(p.amount, group.currency), name: p.member_name, months }) : t('Saved {amount} from {name} (kept as credit).', { amount: money(p.amount, group.currency), name: p.member_name }));
             reset();
             payments.reload();
         });
@@ -100,7 +103,7 @@ export default function Payments() {
 
     const remove = (p) =>
         edit.run(async () => {
-            const ok = await confirm({ title: 'Delete payment?', message: `${money(p.amount, group.currency)} from ${p.member_name} on ${dateLabel(p.paid_at)} will be removed and their months recalculated.`, confirmLabel: 'Delete', tone: 'danger' });
+            const ok = await confirm({ title: t('Delete payment?'), message: t('{amount} from {name} on {date} will be removed and their months recalculated.', { amount: money(p.amount, group.currency), name: p.member_name, date: dateLabel(p.paid_at) }), confirmLabel: t('Delete'), tone: 'danger' });
             if (!ok) return;
             await api(`/payments/${p.id}`, { method: 'DELETE' });
             payments.reload();
@@ -108,19 +111,19 @@ export default function Payments() {
 
     return (
         <>
-            <PageHeader icon={Wallet} title="Payments" subtitle="Record deposits made to the group's M-Koba." />
+            <PageHeader icon={Wallet} title={t('Payments')} subtitle={t("Record deposits made to the group's M-Koba.")} />
 
             <section className="card mb-6">
-                <h2 className="mb-3 font-semibold">Record a payment</h2>
-                <PaymentForm initial={blank(group.monthly_amount)} submitLabel="Save payment" onSubmit={record} busy={create.busy} error={create.error} />
+                <h2 className="mb-3 font-semibold">{t('Record a payment')}</h2>
+                <PaymentForm initial={blank(group.monthly_amount)} submitLabel={t('Save payment')} rule={group.allocation_rule} onSubmit={record} busy={create.busy} error={create.error} />
             </section>
 
             <section className="card">
                 <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <h2 className="font-semibold">Recorded payments</h2>
+                    <h2 className="font-semibold">{t('Recorded payments')}</h2>
                     <div className="grid grid-cols-2 gap-2 sm:flex">
-                        <MemberSelect value={filter.user_id} onChange={(v) => setFilter((f) => ({ ...f, user_id: v }))} allowEmpty emptyLabel="All members" />
-                        <input className="input" type="month" value={filter.month} onChange={(e) => setFilter((f) => ({ ...f, month: e.target.value }))} aria-label="Month paid" />
+                        <MemberSelect value={filter.user_id} onChange={(v) => setFilter((f) => ({ ...f, user_id: v }))} allowEmpty emptyLabel={t('All members')} />
+                        <input className="input" type="month" value={filter.month} onChange={(e) => setFilter((f) => ({ ...f, month: e.target.value }))} aria-label={t('Month paid')} />
                     </div>
                 </div>
                 <ErrorBox error={payments.error || edit.error} className="mb-3" />
@@ -131,12 +134,12 @@ export default function Payments() {
                         <table className="table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Member</th>
-                                    <th className="text-right">Amount</th>
-                                    <th>Method</th>
-                                    <th>Reference</th>
-                                    <th>Applied to</th>
+                                    <th>{t('Date')}</th>
+                                    <th>{t('Member')}</th>
+                                    <th className="text-right">{t('Amount')}</th>
+                                    <th>{t('Method')}</th>
+                                    <th>{t('Reference')}</th>
+                                    <th>{t('Applied to')}</th>
                                     <th />
                                 </tr>
                             </thead>
@@ -149,16 +152,16 @@ export default function Payments() {
                                         <td className="uppercase">{p.method}</td>
                                         <td className="font-mono text-xs">{p.reference || '-'}</td>
                                         <td className="text-xs text-slate-300">
-                                            {p.applied_to.length ? p.applied_to.map((a) => `${a.period}: ${a.amount.toLocaleString()}`).join(', ') : 'Credit'}
-                                            {p.source === 'import' && <span className="ml-1 rounded bg-white/10 px-1 text-slate-400">imported</span>}
+                                            {p.applied_to.length ? p.applied_to.map((a) => `${a.period}: ${a.amount.toLocaleString()}`).join(', ') : t('Credit')}
+                                            {p.source === 'import' && <span className="ml-1 rounded bg-white/10 px-1 text-slate-400">{t('imported')}</span>}
                                         </td>
                                         <td className="whitespace-nowrap text-right">
                                             <span className="mr-1"><ReceiptButtons payment={p} group={group} /></span>
                                             <button type="button" className="btn btn-secondary btn-sm mr-1" onClick={() => setEditing(p)}>
-                                                Edit
+                                                {t('Edit')}
                                             </button>
                                             <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(p)}>
-                                                Delete
+                                                {t('Delete')}
                                             </button>
                                         </td>
                                     </tr>
@@ -167,12 +170,12 @@ export default function Payments() {
                         </table>
                     </div>
                 ) : (
-                    <Empty icon={Wallet}>No payments for this filter.</Empty>
+                    <Empty icon={Wallet}>{t('No payments for this filter.')}</Empty>
                 )}
             </section>
 
             {editing && (
-                <Modal title="Edit payment" onClose={() => setEditing(null)}>
+                <Modal title={t('Edit payment')} onClose={() => setEditing(null)}>
                     <PaymentForm
                         initial={{
                             user_id: editing.user_id,
@@ -183,7 +186,8 @@ export default function Payments() {
                             period: editing.for_period || '',
                             note: editing.note || '',
                         }}
-                        submitLabel="Save changes"
+                        submitLabel={t('Save changes')}
+                        rule={group.allocation_rule}
                         onSubmit={update}
                         busy={edit.busy}
                         error={edit.error}

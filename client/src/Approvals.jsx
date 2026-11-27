@@ -5,6 +5,7 @@ import { api } from './api.js';
 import { useAuth } from './auth.jsx';
 import { useApi } from './useApi.js';
 import { ErrorBox, Field, Modal, useAction, useToast } from './components.jsx';
+import { useT } from './i18n.jsx';
 import { dateLabel, money, monthLabel } from './format.js';
 
 const COUNTS_EVENT = 'mkoba:counts-changed';
@@ -37,6 +38,7 @@ export default function Approvals({ onChange }) {
     const toast = useToast();
     const [rejecting, setRejecting] = useState(null);
     const [reason, setReason] = useState('');
+    const { t } = useT();
     const cur = group.currency;
 
     const pending = (submissions.data || []).filter((s) => s.user_id !== user.id || user.role === 'admin');
@@ -52,7 +54,7 @@ export default function Approvals({ onChange }) {
     const approve = (s) =>
         action.run(async () => {
             await api(`/submissions/${s.id}/approve`, { method: 'POST' });
-            done(`${money(s.amount, cur)} from ${s.member_name} confirmed.`);
+            done(t('{amount} from {name} confirmed.', { amount: money(s.amount, cur), name: s.member_name }));
         });
     const reject = (e) => {
         e.preventDefault();
@@ -60,14 +62,14 @@ export default function Approvals({ onChange }) {
             await api(`/submissions/${rejecting.id}/reject`, { method: 'POST', body: { reason } });
             setRejecting(null);
             setReason('');
-            done('Rejected. The member will see your reason.');
+            done(t('Rejected. The member will see your reason.'));
         });
     };
 
     return (
         <section className="card mb-6 border-amber-300/20">
             <h2 className="mb-3 flex items-center gap-2 font-semibold text-amber-100">
-                <HandCoins className="h-4 w-4 text-amber-300" aria-hidden="true" /> Needs your approval
+                <HandCoins className="h-4 w-4 text-amber-300" aria-hidden="true" /> {t('Needs your approval')}
             </h2>
             <ErrorBox error={action.error} className="mb-3" />
             {pending.length > 0 && (
@@ -76,22 +78,22 @@ export default function Approvals({ onChange }) {
                         <li key={s.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <p className="font-medium text-white">
-                                    {s.member_name} paid {money(s.amount, cur)}
+                                    {t('{name} paid {amount}', { name: s.member_name, amount: money(s.amount, cur) })}
                                 </p>
                                 <p className="text-xs text-slate-400">
-                                    {dateLabel(s.paid_at)} · {s.method === 'mpesa' ? 'M-Pesa' : s.method}
+                                    {dateLabel(s.paid_at)} · {s.method === 'mpesa' ? 'M-Pesa' : t(s.method === 'cash' ? 'Cash' : 'Bank')}
                                     {s.reference && <span className="font-mono"> · {s.reference}</span>}
-                                    {s.period && ` · for ${monthLabel(s.period)}`}
+                                    {s.period && ` · ${t('for {month}', { month: monthLabel(s.period) })}`}
                                     {s.note && ` · “${s.note}”`}
                                 </p>
-                                <p className="text-xs text-slate-500">Check this code in M-Koba before confirming.</p>
+                                <p className="text-xs text-slate-500">{t('Check this code in M-Koba before confirming.')}</p>
                             </div>
                             <div className="flex shrink-0 gap-2">
                                 <button type="button" className="btn btn-primary btn-sm" onClick={() => approve(s)} disabled={action.busy}>
-                                    <Check className="h-3.5 w-3.5" aria-hidden="true" /> Confirm
+                                    <Check className="h-3.5 w-3.5" aria-hidden="true" /> {t('Confirm')}
                                 </button>
                                 <button type="button" className="btn btn-danger btn-sm" onClick={() => setRejecting(s)} disabled={action.busy}>
-                                    <X className="h-3.5 w-3.5" aria-hidden="true" /> Reject
+                                    <X className="h-3.5 w-3.5" aria-hidden="true" /> {t('Reject')}
                                 </button>
                             </div>
                         </li>
@@ -102,22 +104,22 @@ export default function Approvals({ onChange }) {
                 <Link to="/cashbook" className="glass-subtle mt-3 flex items-center justify-between rounded-xl px-3 py-2.5 text-sm hover:bg-white/[0.07]">
                     <span className="flex items-center gap-2">
                         <Landmark className="h-4 w-4 text-brand-300" aria-hidden="true" />
-                        {cashbook} money-out {cashbook === 1 ? 'entry is' : 'entries are'} waiting in the cash book
+                        {t('{n} money-out entries waiting in the cash book', { n: cashbook })}
                     </span>
-                    <span className="text-brand-300">Review</span>
+                    <span className="text-brand-300">{t('Review')}</span>
                 </Link>
             )}
             {rejecting && (
-                <Modal title="Reject reported payment" onClose={() => setRejecting(null)}>
+                <Modal title={t('Reject reported payment')} onClose={() => setRejecting(null)}>
                     <form onSubmit={reject} className="space-y-4">
                         <p className="text-sm text-slate-300">
                             {rejecting.member_name}: {money(rejecting.amount, cur)} {rejecting.reference && `(${rejecting.reference})`}
                         </p>
-                        <Field label="Reason (the member will see this)">
-                            <input className="input" value={reason} onChange={(e) => setReason(e.target.value)} minLength={3} required autoFocus placeholder="e.g. Code not found in M-Koba" />
+                        <Field label={t('Reason (the member will see this)')}>
+                            <input className="input" value={reason} onChange={(e) => setReason(e.target.value)} minLength={3} required autoFocus placeholder={t('e.g. Code not found in M-Koba')} />
                         </Field>
                         <button className="btn btn-danger" disabled={action.busy}>
-                            Reject
+                            {t('Reject')}
                         </button>
                     </form>
                 </Modal>

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from './auth.jsx';
 import { Avatar } from './components.jsx';
+import { LanguageSwitch, useT } from './i18n.jsx';
 import { useApprovalCounts } from './Approvals.jsx';
 
 // `mobile: true` items appear in the phone's bottom bar; the rest go under "More".
@@ -44,9 +45,10 @@ function useLinks() {
 }
 
 function Badge({ count, className = '' }) {
+    const { t } = useT();
     if (!count) return null;
     return (
-        <span className={`inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] leading-5 font-semibold text-slate-950 ${className}`} aria-label={`${count} waiting`}>
+        <span className={`inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] leading-5 font-semibold text-slate-950 ${className}`} aria-label={t('{n} waiting', { n: count })}>
             {count}
         </span>
     );
@@ -91,16 +93,19 @@ function Brand() {
     );
 }
 
+const ROLES = { admin: 'Admin', leader: 'Leader', member: 'Member' };
+
 function UserCard() {
     const { user, logout } = useAuth();
+    const { t } = useT();
     return (
         <div className="glass-subtle flex items-center gap-3 rounded-2xl p-3">
             <Avatar name={user.name} />
             <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-white">{user.name}</p>
-                <p className="text-xs text-slate-400 capitalize">{user.role}</p>
+                <p className="text-xs text-slate-400">{t(ROLES[user.role])}</p>
             </div>
-            <button type="button" onClick={logout} className="btn btn-ghost btn-sm" aria-label="Log out" title="Log out">
+            <button type="button" onClick={logout} className="btn btn-ghost btn-sm" aria-label={t('Log out')} title={t('Log out')}>
                 <LogOut className="h-4 w-4" />
             </button>
         </div>
@@ -109,9 +114,10 @@ function UserCard() {
 
 export default function Layout() {
     const location = useLocation();
+    const { t } = useT();
     const counts = useApprovalCounts(location.pathname);
     const badges = { '/': (counts?.submissions || 0) + (counts?.cashbook || 0), '/cashbook': counts?.cashbook || 0 };
-    const links = useLinks().map((l) => ({ ...l, badge: badges[l.to] }));
+    const links = useLinks().map((l) => ({ ...l, label: t(l.label), short: l.short && t(l.short), badge: badges[l.to] }));
     const [moreOpen, setMoreOpen] = useState(false);
     const mobile = links.filter((l) => l.mobile).slice(0, 4);
     const more = links.filter((l) => !mobile.includes(l));
@@ -132,7 +138,10 @@ export default function Layout() {
                         ))}
                     </nav>
                 </div>
-                <UserCard />
+                <div className="space-y-3">
+                    <LanguageSwitch className="flex w-full [&>button]:flex-1" />
+                    <UserCard />
+                </div>
             </aside>
 
             {/* Phone top bar */}
@@ -172,7 +181,7 @@ export default function Layout() {
                         aria-expanded={moreOpen}
                     >
                         <Ellipsis className="h-5 w-5" aria-hidden="true" />
-                        More
+                        {t('More')}
                     </button>
             </nav>
 
@@ -180,8 +189,8 @@ export default function Layout() {
                 <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm lg:hidden" onClick={() => setMoreOpen(false)}>
                     <div className="glass-strong animate-rise absolute inset-x-3 bottom-3 rounded-3xl p-4" onClick={(e) => e.stopPropagation()}>
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="text-sm font-semibold text-white">More</p>
-                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMoreOpen(false)} aria-label="Close">
+                            <p className="text-sm font-semibold text-white">{t('More')}</p>
+                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMoreOpen(false)} aria-label={t('Close')}>
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
@@ -190,6 +199,7 @@ export default function Layout() {
                                 <SideLink key={l.to} link={l} />
                             ))}
                         </nav>
+                        <LanguageSwitch className="mb-3 flex w-full [&>button]:flex-1" />
                         <UserCard />
                     </div>
                 </div>

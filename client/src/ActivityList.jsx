@@ -3,6 +3,7 @@ import { CalendarRange, FileSpreadsheet, HandCoins, History, Landmark, Settings,
 import { api } from './api.js';
 import { Avatar, Empty, ErrorBox, Loading } from './components.jsx';
 import { dateLabel } from './format.js';
+import { useT } from './i18n.jsx';
 
 const ICONS = {
     payment: Wallet,
@@ -34,6 +35,7 @@ const dayKey = (iso) => {
 const show = (v) => (v === null || v === undefined || v === '' ? '—' : typeof v === 'object' ? JSON.stringify(v) : String(v));
 
 function Changes({ before, after }) {
+    const { t } = useT();
     const keys = [...new Set([...Object.keys(before || {}), ...Object.keys(after || {})])];
     if (keys.length === 0) return null;
     return (
@@ -41,9 +43,9 @@ function Changes({ before, after }) {
             <table className="w-full text-left text-xs">
                 <thead>
                     <tr className="text-slate-500">
-                        <th className="px-3 py-1.5 font-medium">Field</th>
-                        {before && <th className="px-3 py-1.5 font-medium">Before</th>}
-                        {after && <th className="px-3 py-1.5 font-medium">After</th>}
+                        <th className="px-3 py-1.5 font-medium">{t('Field')}</th>
+                        {before && <th className="px-3 py-1.5 font-medium">{t('Before')}</th>}
+                        {after && <th className="px-3 py-1.5 font-medium">{t('After')}</th>}
                     </tr>
                 </thead>
                 <tbody>
@@ -61,6 +63,7 @@ function Changes({ before, after }) {
 }
 
 function Item({ item }) {
+    const { t } = useT();
     const [open, setOpen] = useState(false);
     const Icon = ICONS[item.entity] || History;
     const verb = item.action.split('.')[1];
@@ -78,12 +81,12 @@ function Item({ item }) {
                             <Avatar name={item.actor_name} className="h-4 w-4 text-[8px]" /> {item.actor_name}
                         </>
                     ) : (
-                        'System'
+                        t('System')
                     )}
                     <span>· {timeLabel(item.created_at)}</span>
                     {hasDetails && (
                         <button type="button" className="ml-1 text-brand-300 hover:underline" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-                            {open ? 'Hide details' : 'Details'}
+                            {open ? t('Hide details') : t('Details')}
                         </button>
                     )}
                 </p>
@@ -94,7 +97,8 @@ function Item({ item }) {
 }
 
 // Timeline of audit entries grouped by day, with "Load older".
-export default function ActivityList({ query, emptyText = 'Nothing recorded yet.' }) {
+export default function ActivityList({ query, emptyText }) {
+    const { t } = useT();
     const [items, setItems] = useState([]);
     const [next, setNext] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -122,7 +126,7 @@ export default function ActivityList({ query, emptyText = 'Nothing recorded yet.
 
     if (error) return <ErrorBox error={error} />;
     if (loading && items.length === 0) return <Loading />;
-    if (items.length === 0) return <Empty icon={History}>{emptyText}</Empty>;
+    if (items.length === 0) return <Empty icon={History}>{emptyText || t('Nothing recorded yet.')}</Empty>;
 
     const days = [];
     for (const item of items) {
@@ -145,7 +149,7 @@ export default function ActivityList({ query, emptyText = 'Nothing recorded yet.
             ))}
             {next && (
                 <button type="button" className="btn btn-secondary mt-2 w-full" onClick={() => load(next)} disabled={loading}>
-                    {loading ? 'Loading…' : 'Load older'}
+                    {loading ? t('Loading…') : t('Load older')}
                 </button>
             )}
         </div>

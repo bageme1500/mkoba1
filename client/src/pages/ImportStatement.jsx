@@ -5,6 +5,7 @@ import { useApi } from '../useApi.js';
 import { FileSpreadsheet, Upload } from 'lucide-react';
 import { Empty, ErrorBox, Field, Loading, MemberSelect, Notice, PageHeader, useAction } from '../components.jsx';
 import { dateLabel, money } from '../format.js';
+import { useT } from '../i18n.jsx';
 
 const FIELDS = [
     { key: 'date', label: 'Date', required: true },
@@ -31,6 +32,7 @@ export default function ImportStatement() {
     const [result, setResult] = useState(null);
     const history = useApi('/imports');
     const action = useAction();
+    const { t } = useT();
 
     const reset = () => {
         setFile(null);
@@ -71,12 +73,12 @@ export default function ImportStatement() {
         <>
             <PageHeader
                 icon={Upload}
-                title="Upload statement"
-                subtitle="Upload an M-Pesa or M-Koba statement (CSV or Excel). Deposits are matched to members by phone number."
+                title={t('Upload statement')}
+                subtitle={t('Upload an M-Pesa or M-Koba statement (CSV or Excel). Deposits are matched to members by phone number.')}
                 actions={
                     (preview || result) && (
                         <button type="button" className="btn btn-secondary" onClick={reset}>
-                            Upload another
+                            {t('Upload another')}
                         </button>
                     )
                 }
@@ -85,11 +87,11 @@ export default function ImportStatement() {
 
             {!preview && !result && (
                 <form onSubmit={upload} className="card mb-6 space-y-4">
-                    <Field label="Statement file" hint=".csv or .xlsx, up to 5 MB">
+                    <Field label={t('Statement file')} hint={t('.csv or .xlsx, up to 5 MB')}>
                         <input className="input file:mr-3 file:rounded-lg file:border-0 file:bg-brand-400/20 file:px-3 file:py-1 file:text-brand-100" type="file" accept=".csv,.xlsx,.txt" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
                     </Field>
                     <button className="btn btn-primary" disabled={!file || action.busy}>
-                        {action.busy ? 'Reading…' : 'Next: check columns'}
+                        {action.busy ? t('Reading…') : t('Next: check columns')}
                     </button>
                 </form>
             )}
@@ -97,9 +99,9 @@ export default function ImportStatement() {
             {preview && (
                 <section className="card mb-6 space-y-4">
                     <div>
-                        <h2 className="font-semibold">Which column is which?</h2>
+                        <h2 className="font-semibold">{t('Which column is which?')}</h2>
                         <p className="text-sm text-slate-400">
-                            {preview.filename}: {preview.total_rows} rows. We guessed the columns; check them before importing.
+                            {preview.filename}: {t('{n} rows. We guessed the columns; check them before importing.', { n: preview.total_rows })}
                         </p>
                     </div>
                     {preview.warnings.map((w) => (
@@ -109,9 +111,9 @@ export default function ImportStatement() {
                     ))}
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {FIELDS.map((f) => (
-                            <Field key={f.key} label={`${f.label}${f.required ? '' : ' (optional)'}`} hint={f.hint}>
+                            <Field key={f.key} label={`${t(f.label)}${f.required ? '' : ` (${t('optional')})`}`} hint={f.hint && t(f.hint)}>
                                 <select className="input" value={mapping[f.key] || ''} onChange={(e) => setMapping((m) => ({ ...m, [f.key]: e.target.value || undefined }))} required={f.required}>
-                                    <option value="">{f.required ? 'Choose column' : 'Not in this file'}</option>
+                                    <option value="">{f.required ? t('Choose column') : t('Not in this file')}</option>
                                     {preview.headers.map((h) => (
                                         <option key={h} value={h}>
                                             {h}
@@ -122,7 +124,7 @@ export default function ImportStatement() {
                         ))}
                     </div>
                     <div>
-                        <p className="mb-2 text-sm font-medium text-slate-200">First rows of the file</p>
+                        <p className="mb-2 text-sm font-medium text-slate-200">{t('First rows of the file')}</p>
                         <div className="-mx-4 overflow-x-auto sm:mx-0">
                             <table className="table">
                                 <thead>
@@ -149,7 +151,7 @@ export default function ImportStatement() {
                         </div>
                     </div>
                     <button type="button" className="btn btn-primary" onClick={confirm} disabled={action.busy || !mapping.date || !mapping.amount}>
-                        {action.busy ? 'Importing…' : `Import ${preview.total_rows} rows`}
+                        {action.busy ? t('Importing…') : t('Import {n} rows', { n: preview.total_rows })}
                     </button>
                 </section>
             )}
@@ -157,7 +159,7 @@ export default function ImportStatement() {
             {result && <ImportResult result={result} onChange={setResult} />}
 
             <section className="card">
-                <h2 className="mb-3 font-semibold">Previous uploads</h2>
+                <h2 className="mb-3 font-semibold">{t('Previous uploads')}</h2>
                 {history.loading && !history.data ? (
                     <Loading />
                 ) : history.data?.length ? (
@@ -167,19 +169,19 @@ export default function ImportStatement() {
                                 <div>
                                     <p className="font-medium">{i.filename}</p>
                                     <p className="text-xs text-slate-400">
-                                        {dateLabel(i.created_at)} by {i.uploaded_by_name || 'unknown'} · {i.matched_rows} recorded
-                                        {i.unmatched_rows > 0 && <span className="text-amber-300"> · {i.unmatched_rows} need a member</span>}
-                                        {i.cashbook_rows > 0 && <span className="text-sky-300"> · {i.cashbook_rows} to cash book</span>}
+                                        {dateLabel(i.created_at)} · {t('by {name}', { name: i.uploaded_by_name || '?' })} · {t('{n} recorded', { n: i.matched_rows })}
+                                        {i.unmatched_rows > 0 && <span className="text-amber-300"> · {t('{n} need a member', { n: i.unmatched_rows })}</span>}
+                                        {i.cashbook_rows > 0 && <span className="text-sky-300"> · {t('{n} to cash book', { n: i.cashbook_rows })}</span>}
                                     </p>
                                 </div>
                                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => openImport(i.id)}>
-                                    View
+                                    {t('View')}
                                 </button>
                             </li>
                         ))}
                     </ul>
                 ) : (
-                    <Empty icon={FileSpreadsheet}>No statements uploaded yet.</Empty>
+                    <Empty icon={FileSpreadsheet}>{t('No statements uploaded yet.')}</Empty>
                 )}
             </section>
         </>
@@ -189,11 +191,12 @@ export default function ImportStatement() {
 function ImportResult({ result, onChange }) {
     const { group } = useAuth();
     const [show, setShow] = useState('attention');
+    const { t } = useT();
     const rows = result.rows.filter((r) => (show === 'attention' ? ['unmatched', 'invalid'].includes(r.status) : show === 'all' ? true : r.status === show));
 
     return (
         <section className="card mb-6">
-            <h2 className="font-semibold">Result: {result.filename}</h2>
+            <h2 className="font-semibold">{t('Result')}: {result.filename}</h2>
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:grid-cols-6">
                 {[
                     ['matched', result.matched_rows],
@@ -205,22 +208,22 @@ function ImportResult({ result, onChange }) {
                 ].map(([status, n]) => (
                     <button key={status} type="button" onClick={() => setShow(status)} className={`rounded-lg px-3 py-2 text-left ${STATUS[status][1]} ${show === status ? 'ring-2 ring-brand-400' : ''}`}>
                         <span className="block text-lg font-semibold">{n}</span>
-                        {STATUS[status][0]}
+                        {t(STATUS[status][0])}
                     </button>
                 ))}
             </div>
             <div className="mt-3 flex gap-2 text-sm">
                 <button type="button" className={`btn btn-sm ${show === 'attention' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setShow('attention')}>
-                    Needs attention
+                    {t('Needs attention')}
                 </button>
                 <button type="button" className={`btn btn-sm ${show === 'all' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setShow('all')}>
-                    All rows
+                    {t('All rows')}
                 </button>
             </div>
 
             {rows.length === 0 ? (
                 <div className="mt-4">
-                    <Empty>{show === 'attention' ? 'Nothing needs attention.' : 'No rows here.'}</Empty>
+                    <Empty>{show === 'attention' ? t('Nothing needs attention.') : t('No rows here.')}</Empty>
                 </div>
             ) : (
                 <ul className="mt-4 divide-y divide-white/5">
@@ -237,6 +240,7 @@ function ImportRow({ row, currency, onChange }) {
     const [userId, setUserId] = useState('');
     const [period, setPeriod] = useState('');
     const action = useAction();
+    const { t } = useT();
 
     const assign = () =>
         action.run(async () => {
@@ -249,24 +253,24 @@ function ImportRow({ row, currency, onChange }) {
             <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                     <p className="font-medium">
-                        Row {row.row_number}: {row.amount !== null ? money(row.amount, currency) : '-'} {row.paid_at && <span className="font-normal text-slate-400">on {dateLabel(row.paid_at)}</span>}
+                        {t('Row {n}', { n: row.row_number })}: {row.amount !== null ? money(row.amount, currency) : '-'} {row.paid_at && <span className="font-normal text-slate-400">· {dateLabel(row.paid_at)}</span>}
                     </p>
                     <p className="text-xs text-slate-400">
-                        {[row.payer_name, row.phone, row.reference].filter(Boolean).join(' · ') || 'No details'}
+                        {[row.payer_name, row.phone, row.reference].filter(Boolean).join(' · ') || t('No details')}
                     </p>
                     <p className="text-xs text-slate-300">{row.member_name ? `${row.message} → ${row.member_name}` : row.message}</p>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS[row.status][1]}`}>{STATUS[row.status][0]}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS[row.status][1]}`}>{t(STATUS[row.status][0])}</span>
             </div>
             {row.status === 'unmatched' && (
                 <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_10rem_auto_auto]">
-                    <MemberSelect value={userId} onChange={setUserId} emptyLabel="Who paid this?" />
-                    <input className="input" type="month" value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="For month (optional)" title="For month (optional)" />
+                    <MemberSelect value={userId} onChange={setUserId} emptyLabel={t('Who paid this?')} />
+                    <input className="input" type="month" value={period} onChange={(e) => setPeriod(e.target.value)} aria-label={t('For month (optional)')} title={t('For month (optional)')} />
                     <button type="button" className="btn btn-primary btn-sm" onClick={assign} disabled={!userId || action.busy}>
-                        Record for member
+                        {t('Record for member')}
                     </button>
                     <button type="button" className="btn btn-secondary btn-sm" onClick={skip} disabled={action.busy}>
-                        Not a contribution
+                        {t('Not a contribution')}
                     </button>
                 </div>
             )}
