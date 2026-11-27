@@ -5,6 +5,7 @@ import {
     CalendarRange,
     Ellipsis,
     FileChartColumn,
+    History,
     Landmark,
     LayoutDashboard,
     LogOut,
@@ -27,6 +28,7 @@ const LEADER_LINKS = [
     { to: '/reports/monthly', label: 'Monthly report', short: 'Reports', icon: FileChartColumn, mobile: true },
     { to: '/reports/yearly', label: 'Yearly summary', icon: CalendarRange },
     { to: '/members', label: 'Members', icon: Users, mobile: true },
+    { to: '/activity', label: 'Activity', icon: History },
     { to: '/settings', label: 'Settings', icon: Settings },
 ];
 const MEMBER_LINKS = [
