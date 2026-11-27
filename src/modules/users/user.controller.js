@@ -53,7 +53,7 @@ export async function create(req, res) {
         if (req.user.role !== 'admin') throw forbidden();
         data.group_id = null;
     } else {
-        data.group_id = resolveGroupId(req, data.group_id);
+        data.group_id = resolveGroupId(req, data.group_id ?? req.query.group_id);
         assertCanManageGroup(req.user, data.group_id);
     }
     if (data.password) data.password_hash = await bcrypt.hash(data.password, 10);

@@ -3,6 +3,7 @@ import db from '../../config/db.js';
 // Payments with member name, who recorded it, and which months it paid.
 const SELECT = `
     SELECT p.id, p.group_id, p.user_id, u.name AS member_name, p.due_id,
+           to_char(td.period, 'YYYY-MM') AS for_period,
            p.amount, p.paid_at, p.method, p.reference, p.note, p.source,
            p.recorded_by, rb.name AS recorded_by_name, p.created_at,
            COALESCE((
@@ -15,6 +16,7 @@ const SELECT = `
            ), '[]') AS applied_to
     FROM payments p
     JOIN users u ON u.id = p.user_id
+    LEFT JOIN dues td ON td.id = p.due_id
     LEFT JOIN users rb ON rb.id = p.recorded_by`;
 
 export async function listPayments({ groupId, userId, from, to }) {
