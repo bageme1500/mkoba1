@@ -8,6 +8,7 @@ import userRoutes from './modules/users/user.routes.js';
 import dueRoutes from './modules/dues/due.routes.js';
 import paymentRoutes from './modules/payments/payment.routes.js';
 import importRoutes from './modules/imports/import.routes.js';
+import { meRoutes, reportRoutes } from './modules/reports/report.routes.js';
 
 const app = express();
 
@@ -22,6 +23,8 @@ app.use('/users', userRoutes);
 app.use('/dues', dueRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/imports', importRoutes);
+app.use('/reports', reportRoutes);
+app.use('/me', meRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
