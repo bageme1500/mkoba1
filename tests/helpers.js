@@ -34,10 +34,16 @@ export async function createGroup({ monthly_amount = 50000, due_day = 28, late_f
     return { token: res.body.token, group: res.body.group, leader: res.body.user, auth };
 }
 
-export async function addMember(auth, { name = 'Member', password, joined_at = '2000-01-01' } = {}) {
+export async function addMember(auth, { name = 'Member', password, joined_at = '2000-01-01', role = 'member' } = {}) {
     const phone = nextPhone();
-    const res = await http().post('/users').set(auth).send({ name, phone, password, joined_at }).expect(201);
+    const res = await http().post('/users').set(auth).send({ name, phone, password, joined_at, role }).expect(201);
     return res.body;
+}
+
+// A second leader in the same group, logged in. Returns { user, auth }.
+export async function addLeader(auth, name = 'Second Leader') {
+    const user = await addMember(auth, { name, password: 'secret2', role: 'leader' });
+    return { user, auth: await loginAs(user.phone, 'secret2') };
 }
 
 export async function loginAs(phone, password) {

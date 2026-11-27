@@ -127,3 +127,91 @@ Authorization: Bearer {{token}}
 ### A member's own record (log in as 0754111222 / member123)
 GET {{base}}/me/summary
 Authorization: Bearer {{token}}
+
+### ---------- Round 2 ----------
+
+### Group settings: payment order, automatic months, opening balance
+PUT {{base}}/groups/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "allocation_rule": "current_first", "auto_start": true, "opening_balance": 150000, "opening_balance_date": "2026-08-01" }
+
+### Cash book summary for a month (balance now, last check, pending)
+GET {{base}}/cashbook/summary?period=2026-11
+Authorization: Bearer {{token}}
+
+### Record money out (waits for a second leader)
+POST {{base}}/cashbook/entries
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "direction": "out", "category": "expense", "amount": 15000, "occurred_at": "2026-11-20", "description": "Meeting refreshments" }
+
+### Pending cash book entries
+GET {{base}}/cashbook/entries?status=pending
+Authorization: Bearer {{token}}
+
+### Approve (must be a different leader from the one who recorded it)
+POST {{base}}/cashbook/entries/1/approve
+Authorization: Bearer {{token}}
+
+### Reject with a reason
+POST {{base}}/cashbook/entries/1/reject
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "reason": "No receipt provided" }
+
+### Compare with the real M-Koba balance
+POST {{base}}/cashbook/checks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "checked_on": "2026-11-27", "actual_balance": 927000, "note": "From the M-Koba app" }
+
+### Cash book statement (format=json|xlsx|pdf)
+GET {{base}}/cashbook/report?period=2026-11&format=json
+Authorization: Bearer {{token}}
+
+### Member: report a payment (log in as 0754111222 / member123)
+POST {{base}}/me/submissions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "amount": 50000, "paid_at": "2026-11-26", "reference": "TKX123ABC", "note": "December early" }
+
+### Leader: reported payments waiting
+GET {{base}}/submissions?status=pending
+Authorization: Bearer {{token}}
+
+### Leader: counts for the navigation badges
+GET {{base}}/submissions/counts
+Authorization: Bearer {{token}}
+
+### Leader: confirm a reported payment
+POST {{base}}/submissions/1/approve
+Authorization: Bearer {{token}}
+
+### PDF receipt for a payment
+GET {{base}}/payments/1/receipt
+Authorization: Bearer {{token}}
+
+### Activity log (area: payments|cashbook|members|months|imports|settings)
+GET {{base}}/audit?area=payments&limit=20
+Authorization: Bearer {{token}}
+
+### 12-month trend
+GET {{base}}/reports/trend?months=12
+Authorization: Bearer {{token}}
+
+### Change my language
+PATCH {{base}}/auth/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "language": "en" }
+
+### Log out all other devices (returns a new token for this one)
+POST {{base}}/auth/logout-all
+Authorization: Bearer {{token}}

@@ -73,6 +73,32 @@ describe('allocate', () => {
         expect(credit).toBe(1000);
     });
 
+    describe('current_first rule', () => {
+        const rule = { rule: 'current_first' };
+
+        it('pays the month the payment was made in before older debts', () => {
+            // March is unpaid; an April payment goes to April first.
+            const { allocations } = allocate([due(1, '03'), due(2, '04')], [payment(1, 50000, '2026-04-10')], rule);
+            expect(byDue(allocations)).toEqual({ 2: 50000 });
+        });
+
+        it('sends the extra to the oldest open month', () => {
+            const { allocations } = allocate([due(1, '03'), due(2, '04')], [payment(1, 80000, '2026-04-10')], rule);
+            // 80,000 - 50,000 for April leaves 30,000 for March (which could take up to 52,000 with its fine).
+            expect(byDue(allocations)).toEqual({ 2: 50000, 1: 30000 });
+        });
+
+        it('falls back to oldest first when the month has not been started', () => {
+            const { allocations } = allocate([due(1, '03')], [payment(1, 10000, '2026-05-02')], rule);
+            expect(byDue(allocations)).toEqual({ 1: 10000 });
+        });
+
+        it('still lets a leader choose the month', () => {
+            const { allocations } = allocate([due(1, '03'), due(2, '04')], [payment(1, 50000, '2026-04-10', 1)], rule);
+            expect(byDue(allocations)).toEqual({ 1: 50000 });
+        });
+    });
+
     it('handles cents without rounding errors', () => {
         // 0.1 + 0.2 !== 0.3 in floating point; working in cents must still fill the month exactly.
         const { allocations, credit } = allocate([due(1, '03', { required_amount: 0.3 })], [payment(1, 0.1, '2026-03-01'), payment(2, 0.2, '2026-03-02'), payment(3, 0.05, '2026-03-03')]);
