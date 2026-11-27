@@ -3,15 +3,15 @@ import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 import { monthLabel, today } from '../../utils/dates.js';
 
-const fmt = (n) => (n === null || n === undefined ? '' : new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n));
-const MONEY = '#,##0.00';
+export const fmt = (n) => (n === null || n === undefined ? '' : new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n));
+export const MONEY = '#,##0.00';
 const STATUS_FILL = { paid: 'FFD1FAE5', partial: 'FFFEF3C7', unpaid: 'FFFEE2E2' };
 const STATUS_PDF = { paid: '#d1fae5', partial: '#fef3c7', unpaid: '#fee2e2' };
 const SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // ---------- Excel ----------
 
-function styleHeader(row) {
+export function styleHeader(row) {
     row.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     row.eachCell((c) => {
         c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
@@ -87,7 +87,7 @@ export async function yearlyXlsx(report) {
 
 // ---------- PDF ----------
 
-function pdfBuffer(build, options) {
+export function pdfBuffer(build, options) {
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ margin: 30, size: 'A4', ...options });
         const chunks = [];
@@ -100,7 +100,7 @@ function pdfBuffer(build, options) {
 }
 
 // Draws a simple table, starting a new page (with the header repeated) when needed.
-function drawTable(doc, { columns, rows, fontSize = 9, rowHeight = 18, fills = [] }) {
+export function drawTable(doc, { columns, rows, fontSize = 9, rowHeight = 18, fills = [] }) {
     const x0 = doc.page.margins.left;
     const bottom = doc.page.height - doc.page.margins.bottom;
     let y = doc.y;
@@ -123,6 +123,7 @@ function drawTable(doc, { columns, rows, fontSize = 9, rowHeight = 18, fills = [
                     width: col.width - 6,
                     align: col.align || 'left',
                     lineBreak: false,
+                    height: fontSize * 1.3,
                     ellipsis: true,
                 });
             x += col.width;

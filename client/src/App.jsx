@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
-import { Loading } from './components.jsx';
+import { Backdrop, Loading } from './components.jsx';
 import Layout from './Layout.jsx';
 import Login from './pages/Login.jsx';
 import RegisterGroup from './pages/RegisterGroup.jsx';
@@ -12,20 +12,34 @@ import YearlyReport from './pages/YearlyReport.jsx';
 import Members from './pages/Members.jsx';
 import MemberDetail from './pages/MemberDetail.jsx';
 import Settings from './pages/Settings.jsx';
+import CashBook from './pages/CashBook.jsx';
+import Activity from './pages/Activity.jsx';
 import MyContributions from './pages/MyContributions.jsx';
 import Groups from './pages/Groups.jsx';
 
 export default function App() {
     const { loading, user, group, isLeader, isAdmin } = useAuth();
 
-    if (loading) return <Loading />;
+    if (loading) {
+        return (
+            <>
+                <Backdrop />
+                <div className="mx-auto max-w-md p-8">
+                    <Loading />
+                </div>
+            </>
+        );
+    }
 
     if (!user) {
         return (
-            <Routes>
-                <Route path="/register" element={<RegisterGroup />} />
-                <Route path="*" element={<Login />} />
-            </Routes>
+            <>
+                <Backdrop />
+                <Routes>
+                    <Route path="/register" element={<RegisterGroup />} />
+                    <Route path="*" element={<Login />} />
+                </Routes>
+            </>
         );
     }
 
@@ -33,6 +47,8 @@ export default function App() {
     const leaderPages = isLeader && (!isAdmin || group);
 
     return (
+        <>
+        <Backdrop />
         <Routes>
             <Route element={<Layout />}>
                 {isAdmin && <Route path="/groups" element={<Groups />} />}
@@ -43,6 +59,8 @@ export default function App() {
                         <Route path="import" element={<ImportStatement />} />
                         <Route path="reports/monthly" element={<MonthlyReport />} />
                         <Route path="reports/yearly" element={<YearlyReport />} />
+                        <Route path="cashbook" element={<CashBook />} />
+                        <Route path="activity" element={<Activity />} />
                         <Route path="members" element={<Members />} />
                         <Route path="members/:id" element={<MemberDetail />} />
                         <Route path="settings" element={<Settings />} />
@@ -58,5 +76,6 @@ export default function App() {
                 <Route path="*" element={<Navigate to={isAdmin && !group ? '/groups' : '/'} replace />} />
             </Route>
         </Routes>
+        </>
     );
 }

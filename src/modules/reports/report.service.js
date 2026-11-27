@@ -269,3 +269,34 @@ export async function memberSummary(userId) {
         payments,
     };
 }
+
+// ---------- trend ----------
+
+// Month-by-month totals for the last `months` months (ending with the current one).
+export async function trend(groupId, months = 12) {
+    const end = currentPeriod();
+    const [y, m] = end.split('-').map(Number);
+    const startDate = new Date(Date.UTC(y, m - months, 1));
+    const start = startDate.toISOString().slice(0, 10);
+    const { rows } = await db.query(
+        `SELECT to_char(period, 'YYYY-MM') AS period,
+                COUNT(*)::int AS members,
+                SUM(required_amount + fine) AS expected,
+                SUM(paid_total) AS collected,
+                SUM(balance) AS outstanding,
+                COUNT(*) FILTER (WHERE paid_by_deadline >= required_amount)::int AS on_time
+         FROM due_status
+         WHERE group_id = $1 AND period BETWEEN $2 AND $3
+         GROUP BY period ORDER BY period`,
+        [groupId, start, end],
+    );
+    const byPeriod = new Map(rows.map((r) => [r.period, r]));
+    return Array.from({ length: months }, (_, i) => {
+        const d = new Date(Date.UTC(y, m - months + i, 1));
+        const p = d.toISOString().slice(0, 7);
+        const r = byPeriod.get(p);
+        return r
+            ? { period: p, members: r.members, expected: r.expected, collected: r.collected, outstanding: r.outstanding, on_time: r.on_time, on_time_rate: r.members ? Math.round((r.on_time / r.members) * 100) : 0 }
+            : { period: p, members: 0, expected: 0, collected: 0, outstanding: 0, on_time: 0, on_time_rate: 0 };
+    });
+}
