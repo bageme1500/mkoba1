@@ -2,10 +2,13 @@ import { z } from 'zod';
 import { withTransaction } from '../../config/db.js';
 import * as Dues from './due.model.js';
 import * as Groups from '../groups/group.model.js';
+import * as Users from '../users/user.model.js';
+import { startMonth } from './due.service.js';
 import { reallocateMember } from '../payments/allocation.service.js';
 import { assertCanManageGroup, assertCanViewMember, resolveGroupId } from '../../middleware/auth.js';
+import { audit, money as fmtMoney } from '../../utils/audit.js';
 import { notFound } from '../../utils/httpError.js';
-import { dueDateFor, endOfMonth } from '../../utils/dates.js';
+import { monthLabel } from '../../utils/dates.js';
 import { id, isoDate, money, period } from '../../utils/schemas.js';
 
 const generateSchema = z.object({ period, group_id: id.optional() });
@@ -20,14 +23,15 @@ export async function generate(req, res) {
     if (!group) throw notFound('Group not found');
 
     const created = await withTransaction(async (client) => {
-        const userIds = await Dues.generateForPeriod(client, {
-            group,
-            period: data.period,
-            dueDate: dueDateFor(data.period, group.due_day),
-            endOfMonth: endOfMonth(data.period),
-        });
-        // Apply any credit members already have to the new month.
-        for (const userId of userIds) await reallocateMember(client, userId);
+        const userIds = await startMonth(client, group, data.period);
+        if (userIds.length > 0) {
+            await audit(client, req, {
+                groupId,
+                action: 'month.start',
+                entity: 'month',
+                summary: `Started ${monthLabel(data.period)} for ${userIds.length} member(s)`,
+            });
+        }
         return userIds.length;
     });
 
@@ -52,6 +56,9 @@ export async function get(req, res) {
     res.json(due);
 }
 
+const DUE_LABELS = { required_amount: 'amount', late_fine: 'fine', due_date: 'deadline' };
+const show = (k, v) => (k === 'due_date' ? v : fmtMoney(v));
+
 // Adjust one member's month, e.g. waive a fine (late_fine: 0) or lower the amount.
 export async function update(req, res) {
     const dueId = id.parse(req.params.id);
@@ -59,10 +66,24 @@ export async function update(req, res) {
     const due = await Dues.findById(dueId);
     if (!due) throw notFound('Month not found');
     assertCanManageGroup(req.user, due.group_id);
+    const member = await Users.findById(due.user_id);
 
     await withTransaction(async (client) => {
         await Dues.updateDue(client, dueId, changes);
         await reallocateMember(client, due.user_id);
+        const changed = Object.keys(changes).filter((k) => String(changes[k]) !== String(due[k]));
+        if (changed.length > 0) {
+            await audit(client, req, {
+                groupId: due.group_id,
+                action: 'month.update',
+                entity: 'month',
+                entityId: dueId,
+                subjectUserId: due.user_id,
+                summary: `Changed ${member.name}'s ${monthLabel(due.period)}: ${changed.map((k) => `${DUE_LABELS[k]} ${show(k, due[k])} → ${show(k, changes[k])}`).join(', ')}`,
+                before: Object.fromEntries(changed.map((k) => [k, due[k]])),
+                after: Object.fromEntries(changed.map((k) => [k, changes[k]])),
+            });
+        }
     });
     res.json(await Dues.findStatus(dueId));
 }
@@ -73,10 +94,20 @@ export async function remove(req, res) {
     const due = await Dues.findById(dueId);
     if (!due) throw notFound('Month not found');
     assertCanManageGroup(req.user, due.group_id);
+    const member = await Users.findById(due.user_id);
 
     await withTransaction(async (client) => {
         await Dues.deleteDue(client, dueId);
         await reallocateMember(client, due.user_id);
+        await audit(client, req, {
+            groupId: due.group_id,
+            action: 'month.delete',
+            entity: 'month',
+            entityId: dueId,
+            subjectUserId: due.user_id,
+            summary: `Removed ${monthLabel(due.period)} for ${member.name}`,
+            before: due,
+        });
     });
     res.status(204).end();
 }

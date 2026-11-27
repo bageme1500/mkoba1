@@ -3,7 +3,9 @@ import env from '../config/env.js';
 import db from '../config/db.js';
 import { badRequest, forbidden, unauthorized } from '../utils/httpError.js';
 
-export const signToken = (user) => jwt.sign({ sub: user.id }, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+// `ver` must match the user's token_version; bumping it logs the user out everywhere.
+export const signToken = (user) =>
+    jwt.sign({ sub: user.id, ver: user.token_version ?? 0 }, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
 
 // Reads "Authorization: Bearer <token>" and loads the current user into req.user.
 // The user is re-read on every request so deactivated users and role changes take effect at once.
@@ -20,11 +22,12 @@ export async function requireAuth(req, res, next) {
     }
 
     const { rows } = await db.query(
-        'SELECT id, group_id, name, phone, role, active FROM users WHERE id = $1',
+        'SELECT id, group_id, name, phone, role, active, language, token_version FROM users WHERE id = $1',
         [payload.sub],
     );
     const user = rows[0];
     if (!user || !user.active) throw unauthorized();
+    if ((payload.ver ?? 0) !== user.token_version) throw unauthorized('You were logged out. Please log in again.');
     req.user = user;
     next();
 }

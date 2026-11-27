@@ -1,6 +1,7 @@
 import db from '../../config/db.js';
 
-const COLUMNS = 'id, name, monthly_amount, due_day, late_fine, currency, created_at';
+const COLUMNS = `id, name, monthly_amount, due_day, late_fine, currency, allocation_rule, auto_start,
+                 opening_balance, opening_balance_date, created_at`;
 
 export async function listGroups() {
     const { rows } = await db.query(
@@ -17,22 +18,22 @@ export async function findById(id, client = db) {
     return rows[0];
 }
 
+const FIELDS = ['name', 'monthly_amount', 'due_day', 'late_fine', 'currency', 'allocation_rule', 'auto_start', 'opening_balance', 'opening_balance_date'];
+
 export async function createGroup(data, client = db) {
+    const keys = FIELDS.filter((k) => data[k] !== undefined);
     const { rows } = await client.query(
-        `INSERT INTO groups (name, monthly_amount, due_day, late_fine, currency)
-         VALUES ($1, $2, $3, $4, $5) RETURNING ${COLUMNS}`,
-        [data.name, data.monthly_amount, data.due_day, data.late_fine, data.currency],
+        `INSERT INTO groups (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING ${COLUMNS}`,
+        keys.map((k) => data[k]),
     );
     return rows[0];
 }
 
-const UPDATABLE = ['name', 'monthly_amount', 'due_day', 'late_fine', 'currency'];
-
-export async function updateGroup(id, changes) {
-    const keys = UPDATABLE.filter((k) => changes[k] !== undefined);
-    if (keys.length === 0) return findById(id);
+export async function updateGroup(id, changes, client = db) {
+    const keys = FIELDS.filter((k) => changes[k] !== undefined);
+    if (keys.length === 0) return findById(id, client);
     const sets = keys.map((k, i) => `${k} = $${i + 2}`).join(', ');
-    const { rows } = await db.query(`UPDATE groups SET ${sets} WHERE id = $1 RETURNING ${COLUMNS}`, [
+    const { rows } = await client.query(`UPDATE groups SET ${sets} WHERE id = $1 RETURNING ${COLUMNS}`, [
         id,
         ...keys.map((k) => changes[k]),
     ]);

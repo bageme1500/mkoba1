@@ -19,7 +19,8 @@ export default defineConfig({
     test: {
         include: ['tests/**/*.test.js'],
         globalSetup: './tests/globalSetup.js',
-        env: { DATABASE_URL: testDb, JWT_SECRET: 'test-secret' },
+        // Tests register many groups from one address; logins keep the real limit.
+        env: { DATABASE_URL: testDb, JWT_SECRET: 'test-secret', REGISTER_RATE_LIMIT: '10000' },
         // API tests share one database, so run files one after another.
         fileParallelism: false,
     },

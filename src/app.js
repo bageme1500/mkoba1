@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import env from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
 import authRoutes from './modules/auth/auth.routes.js';
@@ -12,6 +13,9 @@ import { meRoutes, reportRoutes } from './modules/reports/report.routes.js';
 
 const app = express();
 
+// Set TRUST_PROXY=1 when running behind a proxy/load balancer so rate limits see real client IPs.
+if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
+app.use(helmet());
 app.use(cors({ origin: env.clientOrigins }));
 app.use(express.json());
 

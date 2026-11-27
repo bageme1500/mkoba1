@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api.js';
+import { api, setToken } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { Settings as SettingsIcon } from 'lucide-react';
 import { ErrorBox, Field, Notice, PageHeader, useAction } from '../components.jsx';
@@ -70,7 +70,9 @@ function ChangePassword() {
     const submit = (e) => {
         e.preventDefault();
         action.run(async () => {
-            await api('/auth/change-password', { method: 'POST', body: form });
+            // Other devices are logged out; keep this one logged in with the new token.
+            const { token } = await api('/auth/change-password', { method: 'POST', body: form });
+            setToken(token);
             setForm({ current_password: '', new_password: '' });
             setSaved(true);
         });
