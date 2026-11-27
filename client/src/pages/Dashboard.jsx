@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CircleCheck, CircleX, Copy, Hourglass, MessageCircle, Plus, Upload, Wallet } from 'lucide-react';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../useApi.js';
-import { Empty, ErrorBox, Loading, Notice, PageHeader, Stat, StatusBadge, useAction } from '../components.jsx';
+import { Avatar, Empty, ErrorBox, Loading, Notice, PageHeader, Stat, StatusBadge, useAction } from '../components.jsx';
 import { dateLabel, money, monthLabel, ordinal, thisMonth } from '../format.js';
 
 export default function Dashboard() {
@@ -32,8 +33,8 @@ export default function Dashboard() {
             <>
                 <PageHeader title={monthLabel(period)} subtitle={group.name} />
                 <div className="card text-center">
-                    <p className="text-gray-700">{monthLabel(period)} has not been started yet.</p>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="text-slate-200">{monthLabel(period)} has not been started yet.</p>
+                    <p className="mt-1 text-sm text-slate-400">
                         Starting the month gives every active member {money(group.monthly_amount, cur)} to pay by the {ordinal(group.due_day)}.
                     </p>
                     <ErrorBox error={start.error} className="mt-3" />
@@ -58,10 +59,10 @@ export default function Dashboard() {
                 actions={
                     <>
                         <Link to="/payments" className="btn btn-primary">
-                            Record payment
+                            <Plus className="h-4 w-4" aria-hidden="true" /> Record payment
                         </Link>
                         <Link to="/import" className="btn btn-secondary">
-                            Upload statement
+                            <Upload className="h-4 w-4" aria-hidden="true" /> Upload statement
                         </Link>
                     </>
                 }
@@ -69,22 +70,22 @@ export default function Dashboard() {
 
             <div className="card mb-4">
                 <div className="flex items-baseline justify-between text-sm">
-                    <span className="font-medium text-gray-700">Collected this month</span>
-                    <span className="text-gray-500">
+                    <span className="font-medium text-slate-200">Collected this month</span>
+                    <span className="text-slate-400">
                         {money(t.collected, cur)} of {money(target, cur)}
                     </span>
                 </div>
-                <div className="mt-2 h-3 overflow-hidden rounded-full bg-gray-100" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-                    <div className="h-full rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
+                <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/5" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                    <div className="h-full rounded-full bg-gradient-to-r from-brand-400 to-emerald-400 shadow-[0_0_16px_rgb(45_212_191/0.6)] transition-all duration-700" style={{ width: `${pct}%` }} />
                 </div>
-                <p className="mt-1 text-right text-xs text-gray-500">{pct}%</p>
+                <p className="mt-1 text-right text-xs text-slate-400">{pct}%</p>
             </div>
 
             <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <Stat label="Paid" value={t.paid + t.paid_late} hint={t.paid_late ? `${t.paid_late} paid late` : `of ${t.members} members`} tone="good" />
-                <Stat label="Partial" value={t.partial} tone="warn" />
-                <Stat label="Not paid" value={t.unpaid} tone="bad" />
-                <Stat label="Outstanding" value={money(t.outstanding, cur)} />
+                <Stat label="Paid" icon={CircleCheck} value={t.paid + t.paid_late} hint={t.paid_late ? `${t.paid_late} paid late` : `of ${t.members} members`} tone="good" />
+                <Stat label="Partial" icon={Hourglass} value={t.partial} tone="warn" />
+                <Stat label="Not paid" icon={CircleX} value={t.unpaid} tone="bad" />
+                <Stat label="Outstanding" icon={Wallet} value={money(t.outstanding, cur)} />
             </div>
 
             <div className="grid gap-6 lg:grid-cols-5">
@@ -108,19 +109,20 @@ export default function Dashboard() {
                 <section className="card lg:col-span-2">
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="font-semibold">Payments this month</h2>
-                        <Link to="/payments" className="text-sm text-brand-700 hover:underline">
+                        <Link to="/payments" className="text-sm text-brand-300 hover:underline">
                             All
                         </Link>
                     </div>
                     {recent.loading && !recent.data ? (
                         <Loading />
                     ) : recent.data?.length ? (
-                        <ul className="divide-y divide-gray-100">
+                        <ul className="divide-y divide-white/5">
                             {recent.data.slice(0, 8).map((p) => (
-                                <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                                    <div>
+                                <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                                    <Avatar name={p.member_name} className="h-8 w-8 text-xs" />
+                                    <div className="min-w-0 flex-1">
                                         <p className="font-medium">{p.member_name}</p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-slate-400">
                                             {dateLabel(p.paid_at)} · {p.method.toUpperCase()}
                                         </p>
                                     </div>
@@ -129,7 +131,7 @@ export default function Dashboard() {
                             ))}
                         </ul>
                     ) : (
-                        <Empty>No payments yet this month.</Empty>
+                        <Empty icon={Wallet}>No payments yet this month.</Empty>
                     )}
                 </section>
             </div>
@@ -159,14 +161,14 @@ function Reminders({ data, loading, error, currency }) {
             {data.members.length === 0 ? (
                 <Notice>Everyone has paid for this month.</Notice>
             ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-white/5">
                     {data.members.map((m) => (
                         <li key={m.user_id} className="flex items-center justify-between gap-3 py-2 text-sm">
                             <div>
                                 <Link to={`/members/${m.user_id}`} className="font-medium hover:underline">
                                     {m.member_name}
                                 </Link>
-                                {m.owes_earlier > 0 && <p className="text-xs text-red-700">+ {money(m.owes_earlier, currency)} from earlier months</p>}
+                                {m.owes_earlier > 0 && <p className="text-xs text-rose-300">+ {money(m.owes_earlier, currency)} from earlier months</p>}
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="whitespace-nowrap font-medium">{money(m.owes_this_month, currency)}</span>
@@ -176,16 +178,16 @@ function Reminders({ data, loading, error, currency }) {
                     ))}
                 </ul>
             )}
-            <details className="mt-4 rounded-lg bg-gray-50 p-3">
-                <summary className="cursor-pointer text-sm font-medium text-gray-700">Reminder message for WhatsApp</summary>
-                <pre className="mt-2 whitespace-pre-wrap font-sans text-sm text-gray-800">{data.message}</pre>
+            <details className="glass-subtle mt-4 rounded-xl p-3">
+                <summary className="cursor-pointer text-sm font-medium text-slate-200">Reminder message for WhatsApp</summary>
+                <pre className="mt-2 whitespace-pre-wrap font-sans text-sm text-slate-100">{data.message}</pre>
             </details>
             <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={copy}>
-                    {copied ? 'Copied!' : 'Copy message'}
+                    <Copy className="h-3.5 w-3.5" aria-hidden="true" /> {copied ? 'Copied!' : 'Copy message'}
                 </button>
                 <a className="btn btn-secondary btn-sm" href={whatsapp} target="_blank" rel="noreferrer">
-                    Open in WhatsApp
+                    <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" /> Open in WhatsApp
                 </a>
             </div>
         </>

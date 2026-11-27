@@ -1,3 +1,4 @@
+import { CircleCheck, Clock, PiggyBank, Wallet } from 'lucide-react';
 import { Empty, Stat, StatusBadge } from './components.jsx';
 import { dateLabel, money, monthLabel } from './format.js';
 
@@ -9,10 +10,10 @@ export default function MemberRecord({ summary }) {
     return (
         <>
             <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <Stat label="Paid in total" value={money(totals.paid, cur)} tone="good" />
-                <Stat label="Still owes" value={money(totals.balance, cur)} tone={totals.balance ? 'bad' : 'good'} hint={totals.fines ? `incl. ${money(totals.fines, cur)} fines` : undefined} />
-                <Stat label="Months late" value={totals.late_months} tone={totals.late_months ? 'warn' : 'default'} />
-                <Stat label="Credit" value={money(credit, cur)} hint="Paid ahead, used for the next month" />
+                <Stat label="Paid in total" icon={CircleCheck} value={money(totals.paid, cur)} tone="good" />
+                <Stat label="Still owes" icon={Wallet} value={money(totals.balance, cur)} tone={totals.balance ? 'bad' : 'good'} hint={totals.fines ? `incl. ${money(totals.fines, cur)} fines` : undefined} />
+                <Stat label="Months late" icon={Clock} value={totals.late_months} tone={totals.late_months ? 'warn' : 'default'} />
+                <Stat label="Credit" icon={PiggyBank} tone="info" value={money(credit, cur)} hint="Paid ahead, used for the next month" />
             </div>
 
             <section className="card mb-6">
@@ -37,11 +38,11 @@ export default function MemberRecord({ summary }) {
                                 {months.map((m) => (
                                     <tr key={m.id}>
                                         <td className="whitespace-nowrap font-medium">{monthLabel(m.period)}</td>
-                                        <td className="whitespace-nowrap text-gray-600">{dateLabel(m.due_date)}</td>
+                                        <td className="whitespace-nowrap text-slate-300">{dateLabel(m.due_date)}</td>
                                         <td className="text-right">{m.required_amount.toLocaleString()}</td>
                                         <td className="text-right">{m.fine ? m.fine.toLocaleString() : '-'}</td>
                                         <td className="text-right">{m.paid_total.toLocaleString()}</td>
-                                        <td className={`text-right font-medium ${m.balance ? 'text-red-700' : ''}`}>{m.balance.toLocaleString()}</td>
+                                        <td className={`text-right font-medium ${m.balance ? 'text-rose-300' : ''}`}>{m.balance.toLocaleString()}</td>
                                         <td>
                                             <StatusBadge label={m.status_label} />
                                         </td>
@@ -58,14 +59,14 @@ export default function MemberRecord({ summary }) {
                 {payments.length === 0 ? (
                     <Empty>No payments recorded.</Empty>
                 ) : (
-                    <ul className="divide-y divide-gray-100">
+                    <ul className="divide-y divide-white/5">
                         {payments.map((p) => (
                             <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                                 <div>
                                     <p className="font-medium">
-                                        {money(p.amount, cur)} <span className="font-normal text-gray-500">· {dateLabel(p.paid_at)} · {p.method.toUpperCase()}</span>
+                                        {money(p.amount, cur)} <span className="font-normal text-slate-400">· {dateLabel(p.paid_at)} · {p.method.toUpperCase()}</span>
                                     </p>
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-slate-400">
                                         {p.reference && <span className="font-mono">{p.reference} · </span>}
                                         {p.applied_to.length ? `For ${p.applied_to.map((a) => monthLabel(a.period)).join(', ')}` : 'Kept as credit'}
                                     </p>

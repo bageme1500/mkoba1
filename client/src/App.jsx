@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
-import { Loading } from './components.jsx';
+import { Backdrop, Loading } from './components.jsx';
 import Layout from './Layout.jsx';
 import Login from './pages/Login.jsx';
 import RegisterGroup from './pages/RegisterGroup.jsx';
@@ -18,14 +18,26 @@ import Groups from './pages/Groups.jsx';
 export default function App() {
     const { loading, user, group, isLeader, isAdmin } = useAuth();
 
-    if (loading) return <Loading />;
+    if (loading) {
+        return (
+            <>
+                <Backdrop />
+                <div className="mx-auto max-w-md p-8">
+                    <Loading />
+                </div>
+            </>
+        );
+    }
 
     if (!user) {
         return (
-            <Routes>
-                <Route path="/register" element={<RegisterGroup />} />
-                <Route path="*" element={<Login />} />
-            </Routes>
+            <>
+                <Backdrop />
+                <Routes>
+                    <Route path="/register" element={<RegisterGroup />} />
+                    <Route path="*" element={<Login />} />
+                </Routes>
+            </>
         );
     }
 
@@ -33,6 +45,8 @@ export default function App() {
     const leaderPages = isLeader && (!isAdmin || group);
 
     return (
+        <>
+        <Backdrop />
         <Routes>
             <Route element={<Layout />}>
                 {isAdmin && <Route path="/groups" element={<Groups />} />}
@@ -58,5 +72,6 @@ export default function App() {
                 <Route path="*" element={<Navigate to={isAdmin && !group ? '/groups' : '/'} replace />} />
             </Route>
         </Routes>
+        </>
     );
 }

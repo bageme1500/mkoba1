@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
+import { Settings as SettingsIcon } from 'lucide-react';
 import { ErrorBox, Field, Notice, PageHeader, useAction } from '../components.jsx';
 
 function GroupSettings() {
@@ -36,7 +37,7 @@ function GroupSettings() {
         <form onSubmit={submit} className="card space-y-4">
             <div>
                 <h2 className="font-semibold">Group settings</h2>
-                <p className="text-sm text-gray-500">Changes apply to months you start from now on. Months already started keep their amount and fine.</p>
+                <p className="text-sm text-slate-400">Changes apply to months you start from now on. Months already started keep their amount and fine.</p>
             </div>
             <Field label="Group name">
                 <input className="input" value={form.name} onChange={set('name')} required />
@@ -99,7 +100,7 @@ export default function Settings() {
     const { isLeader, group } = useAuth();
     return (
         <>
-            <PageHeader title="Settings" />
+            <PageHeader icon={SettingsIcon} title="Settings" />
             <div className="space-y-6">
                 {isLeader && group && <GroupSettings key={group.id} />}
                 <ChangePassword />

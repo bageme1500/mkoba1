@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../useApi.js';
+import { FileSpreadsheet, Upload } from 'lucide-react';
 import { Empty, ErrorBox, Field, Loading, MemberSelect, Notice, PageHeader, useAction } from '../components.jsx';
 import { dateLabel, money } from '../format.js';
 
@@ -14,11 +15,11 @@ const FIELDS = [
 ];
 
 const STATUS = {
-    matched: ['Recorded', 'bg-emerald-50 text-emerald-700'],
-    unmatched: ['Needs a member', 'bg-amber-50 text-amber-800'],
-    duplicate: ['Already recorded', 'bg-gray-100 text-gray-600'],
-    invalid: ['Could not read', 'bg-red-50 text-red-700'],
-    skipped: ['Skipped', 'bg-gray-100 text-gray-500'],
+    matched: ['Recorded', 'bg-emerald-400/15 text-emerald-200'],
+    unmatched: ['Needs a member', 'bg-amber-400/15 text-amber-200'],
+    duplicate: ['Already recorded', 'bg-white/10 text-slate-300'],
+    invalid: ['Could not read', 'bg-rose-400/15 text-rose-200'],
+    skipped: ['Skipped', 'bg-white/10 text-slate-400'],
 };
 
 export default function ImportStatement() {
@@ -67,6 +68,7 @@ export default function ImportStatement() {
     return (
         <>
             <PageHeader
+                icon={Upload}
                 title="Upload statement"
                 subtitle="Upload an M-Pesa or M-Koba statement (CSV or Excel). Deposits are matched to members by phone number."
                 actions={
@@ -82,7 +84,7 @@ export default function ImportStatement() {
             {!preview && !result && (
                 <form onSubmit={upload} className="card mb-6 space-y-4">
                     <Field label="Statement file" hint=".csv or .xlsx, up to 5 MB">
-                        <input className="input" type="file" accept=".csv,.xlsx,.txt" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
+                        <input className="input file:mr-3 file:rounded-lg file:border-0 file:bg-brand-400/20 file:px-3 file:py-1 file:text-brand-100" type="file" accept=".csv,.xlsx,.txt" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
                     </Field>
                     <button className="btn btn-primary" disabled={!file || action.busy}>
                         {action.busy ? 'Reading…' : 'Next: check columns'}
@@ -94,7 +96,7 @@ export default function ImportStatement() {
                 <section className="card mb-6 space-y-4">
                     <div>
                         <h2 className="font-semibold">Which column is which?</h2>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-slate-400">
                             {preview.filename}: {preview.total_rows} rows. We guessed the columns; check them before importing.
                         </p>
                     </div>
@@ -118,13 +120,13 @@ export default function ImportStatement() {
                         ))}
                     </div>
                     <div>
-                        <p className="mb-2 text-sm font-medium text-gray-700">First rows of the file</p>
+                        <p className="mb-2 text-sm font-medium text-slate-200">First rows of the file</p>
                         <div className="-mx-4 overflow-x-auto sm:mx-0">
                             <table className="table">
                                 <thead>
                                     <tr>
                                         {preview.headers.map((h) => (
-                                            <th key={h} className={Object.values(mapping).includes(h) ? '!bg-brand-50 !text-brand-800' : ''}>
+                                            <th key={h} className={Object.values(mapping).includes(h) ? '!bg-brand-400/15 !text-brand-200' : ''}>
                                                 {h}
                                             </th>
                                         ))}
@@ -157,14 +159,14 @@ export default function ImportStatement() {
                 {history.loading && !history.data ? (
                     <Loading />
                 ) : history.data?.length ? (
-                    <ul className="divide-y divide-gray-100">
+                    <ul className="divide-y divide-white/5">
                         {history.data.map((i) => (
                             <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                                 <div>
                                     <p className="font-medium">{i.filename}</p>
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-slate-400">
                                         {dateLabel(i.created_at)} by {i.uploaded_by_name || 'unknown'} · {i.matched_rows} recorded
-                                        {i.unmatched_rows > 0 && <span className="text-amber-700"> · {i.unmatched_rows} need a member</span>}
+                                        {i.unmatched_rows > 0 && <span className="text-amber-300"> · {i.unmatched_rows} need a member</span>}
                                     </p>
                                 </div>
                                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => openImport(i.id)}>
@@ -174,7 +176,7 @@ export default function ImportStatement() {
                         ))}
                     </ul>
                 ) : (
-                    <Empty>No statements uploaded yet.</Empty>
+                    <Empty icon={FileSpreadsheet}>No statements uploaded yet.</Empty>
                 )}
             </section>
         </>
@@ -197,7 +199,7 @@ function ImportResult({ result, onChange }) {
                     ['invalid', result.invalid_rows],
                     ['skipped', result.skipped_rows],
                 ].map(([status, n]) => (
-                    <button key={status} type="button" onClick={() => setShow(status)} className={`rounded-lg px-3 py-2 text-left ${STATUS[status][1]} ${show === status ? 'ring-2 ring-brand-600' : ''}`}>
+                    <button key={status} type="button" onClick={() => setShow(status)} className={`rounded-lg px-3 py-2 text-left ${STATUS[status][1]} ${show === status ? 'ring-2 ring-brand-400' : ''}`}>
                         <span className="block text-lg font-semibold">{n}</span>
                         {STATUS[status][0]}
                     </button>
@@ -217,7 +219,7 @@ function ImportResult({ result, onChange }) {
                     <Empty>{show === 'attention' ? 'Nothing needs attention.' : 'No rows here.'}</Empty>
                 </div>
             ) : (
-                <ul className="mt-4 divide-y divide-gray-100">
+                <ul className="mt-4 divide-y divide-white/5">
                     {rows.map((r) => (
                         <ImportRow key={r.id} row={r} currency={group.currency} onChange={onChange} />
                     ))}
@@ -243,12 +245,12 @@ function ImportRow({ row, currency, onChange }) {
             <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                     <p className="font-medium">
-                        Row {row.row_number}: {row.amount !== null ? money(row.amount, currency) : '-'} {row.paid_at && <span className="font-normal text-gray-500">on {dateLabel(row.paid_at)}</span>}
+                        Row {row.row_number}: {row.amount !== null ? money(row.amount, currency) : '-'} {row.paid_at && <span className="font-normal text-slate-400">on {dateLabel(row.paid_at)}</span>}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-400">
                         {[row.payer_name, row.phone, row.reference].filter(Boolean).join(' · ') || 'No details'}
                     </p>
-                    <p className="text-xs text-gray-600">{row.member_name ? `${row.message} → ${row.member_name}` : row.message}</p>
+                    <p className="text-xs text-slate-300">{row.member_name ? `${row.message} → ${row.member_name}` : row.message}</p>
                 </div>
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS[row.status][1]}`}>{STATUS[row.status][0]}</span>
             </div>

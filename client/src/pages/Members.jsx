@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../useApi.js';
-import { Empty, ErrorBox, Field, Loading, Modal, PageHeader, useAction } from '../components.jsx';
+import { UserPlus, Users } from 'lucide-react';
+import { Avatar, Empty, ErrorBox, Field, Loading, Modal, PageHeader, useAction, useConfirm, useToast } from '../components.jsx';
 import { dateLabel, phoneLabel, todayIso } from '../format.js';
 
 function MemberForm({ initial, isNew, onSubmit, busy, error }) {
@@ -51,6 +52,8 @@ export default function Members() {
     const members = useApi('/users', { include_inactive: showInactive ? 'true' : undefined });
     const [editing, setEditing] = useState(null); // null | 'new' | member
     const action = useAction();
+    const confirm = useConfirm();
+    const toast = useToast();
 
     const save = (form) =>
         action.run(async () => {
@@ -58,6 +61,7 @@ export default function Members() {
             if (form.password) body.password = form.password;
             if (editing === 'new') await api('/users', { method: 'POST', body });
             else await api(`/users/${editing.id}`, { method: 'PUT', body });
+            toast.success(editing === 'new' ? `${form.name} added.` : 'Changes saved.');
             setEditing(null);
             members.reload();
         });
@@ -65,7 +69,7 @@ export default function Members() {
     const toggleActive = (m) =>
         action.run(async () => {
             if (m.active) {
-                if (!window.confirm(`Deactivate ${m.name}? They will not be charged for new months. Their history stays.`)) return;
+                if (!(await confirm({ title: `Deactivate ${m.name}?`, message: 'They will not be charged for new months. Their history stays in the reports.', confirmLabel: 'Deactivate', tone: 'danger' }))) return;
                 await api(`/users/${m.id}`, { method: 'DELETE' });
             } else {
                 await api(`/users/${m.id}`, { method: 'PUT', body: { active: true } });
@@ -76,16 +80,17 @@ export default function Members() {
     return (
         <>
             <PageHeader
+                icon={Users}
                 title="Members"
                 subtitle="Everyone who contributes. New members are charged from the next month you start."
                 actions={
                     <button type="button" className="btn btn-primary" onClick={() => setEditing('new')}>
-                        Add member
+                        <UserPlus className="h-4 w-4" aria-hidden="true" /> Add member
                     </button>
                 }
             />
-            <label className="mb-3 flex items-center gap-2 text-sm text-gray-600">
-                <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+            <label className="mb-3 flex items-center gap-2 text-sm text-slate-300">
+                <input type="checkbox" className="accent-teal-400" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
                 Show inactive members
             </label>
             <ErrorBox error={members.error || (editing ? null : action.error)} className="mb-3" />
@@ -107,9 +112,10 @@ export default function Members() {
                         </thead>
                         <tbody>
                             {members.data.map((m) => (
-                                <tr key={m.id} className={m.active ? '' : 'text-gray-400'}>
+                                <tr key={m.id} className={m.active ? '' : 'text-slate-500'}>
                                     <td className="whitespace-nowrap font-medium">
-                                        <Link to={`/members/${m.id}`} className="hover:underline">
+                                        <Link to={`/members/${m.id}`} className="inline-flex items-center gap-2.5 hover:underline">
+                                            <Avatar name={m.name} className="h-7 w-7 text-[11px]" />
                                             {m.name}
                                         </Link>
                                         {!m.active && <span className="ml-1 text-xs">(inactive)</span>}
@@ -134,7 +140,7 @@ export default function Members() {
                     </table>
                 </div>
             ) : (
-                <Empty>No members yet. Add the people in your group to start tracking.</Empty>
+                <Empty icon={Users}>No members yet. Add the people in your group to start tracking.</Empty>
             )}
 
             {editing && (

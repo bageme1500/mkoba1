@@ -1,3 +1,4 @@
+import { LayoutDashboard } from 'lucide-react';
 import { useApi } from '../useApi.js';
 import { ErrorBox, Loading, PageHeader } from '../components.jsx';
 import MemberRecord from '../MemberRecord.jsx';
@@ -11,6 +12,7 @@ export default function MyContributions() {
     return (
         <>
             <PageHeader
+                icon={LayoutDashboard}
                 title="My contributions"
                 subtitle={`${g.name}: ${money(g.monthly_amount, g.currency)} every month by the ${ordinal(g.due_day)}${g.late_fine ? `, late fine ${money(g.late_fine, g.currency)}` : ''}.`}
             />

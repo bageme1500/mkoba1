@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { api, download } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../useApi.js';
-import { ErrorBox, Loading, PageHeader, Stat, StatusBadge, useAction } from '../components.jsx';
+import { ChevronLeft, ChevronRight, CircleCheck, Download, FileChartColumn, Target, Wallet } from 'lucide-react';
+import { ErrorBox, Loading, PageHeader, Stat, StatusBadge, useAction, useConfirm } from '../components.jsx';
 import { addMonths, dateLabel, money, monthLabel, thisMonth } from '../format.js';
 
 export default function MonthlyReport() {
@@ -11,6 +12,7 @@ export default function MonthlyReport() {
     const [period, setPeriod] = useState(thisMonth());
     const report = useApi('/reports/monthly', { period });
     const action = useAction();
+    const confirm = useConfirm();
     const cur = group.currency;
 
     const start = () =>
@@ -20,7 +22,7 @@ export default function MonthlyReport() {
         });
     const waive = (row) =>
         action.run(async () => {
-            if (!window.confirm(`Remove the ${money(row.fine, cur)} late fine for ${row.member_name}?`)) return;
+            if (!(await confirm({ title: 'Waive late fine?', message: `Remove the ${money(row.fine, cur)} late fine for ${row.member_name} for ${monthLabel(period)}.`, confirmLabel: 'Waive fine' }))) return;
             await api(`/dues/${row.due_id}`, { method: 'PUT', body: { late_fine: 0 } });
             report.reload();
         });
@@ -31,16 +33,17 @@ export default function MonthlyReport() {
     return (
         <>
             <PageHeader
+                icon={FileChartColumn}
                 title="Monthly report"
                 subtitle={r?.started ? `Deadline ${dateLabel(r.due_date)}${r.deadline_passed ? ' (passed)' : ''}` : undefined}
                 actions={
                     r?.started && (
                         <>
                             <button type="button" className="btn btn-secondary" onClick={() => get('xlsx')} disabled={action.busy}>
-                                Download Excel
+                                <Download className="h-4 w-4" aria-hidden="true" /> Excel
                             </button>
                             <button type="button" className="btn btn-secondary" onClick={() => get('pdf')} disabled={action.busy}>
-                                Download PDF
+                                <Download className="h-4 w-4" aria-hidden="true" /> PDF
                             </button>
                         </>
                     )
@@ -49,11 +52,11 @@ export default function MonthlyReport() {
 
             <div className="mb-5 flex items-center gap-2">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPeriod(addMonths(period, -1))} aria-label="Previous month">
-                    ‹
+                    <ChevronLeft className="h-4 w-4" />
                 </button>
                 <input className="input w-auto" type="month" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} />
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPeriod(addMonths(period, 1))} aria-label="Next month">
-                    ›
+                    <ChevronRight className="h-4 w-4" />
                 </button>
             </div>
 
@@ -62,7 +65,7 @@ export default function MonthlyReport() {
                 <Loading />
             ) : r && !r.started ? (
                 <div className="card text-center">
-                    <p className="text-gray-700">{monthLabel(period)} has not been started.</p>
+                    <p className="text-slate-200">{monthLabel(period)} has not been started.</p>
                     <button type="button" className="btn btn-primary mt-3" onClick={start} disabled={action.busy}>
                         Start {monthLabel(period)}
                     </button>
@@ -70,10 +73,10 @@ export default function MonthlyReport() {
             ) : r ? (
                 <>
                     <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-                        <Stat label="Expected" value={money(r.totals.expected + r.totals.fines, cur)} hint={r.totals.fines ? `incl. ${money(r.totals.fines, cur)} fines` : undefined} />
-                        <Stat label="Collected" value={money(r.totals.collected, cur)} tone="good" />
+                        <Stat label="Expected" icon={Target} value={money(r.totals.expected + r.totals.fines, cur)} hint={r.totals.fines ? `incl. ${money(r.totals.fines, cur)} fines` : undefined} />
+                        <Stat label="Collected" icon={Wallet} value={money(r.totals.collected, cur)} tone="good" />
                         <Stat label="Outstanding" value={money(r.totals.outstanding, cur)} tone={r.totals.outstanding ? 'bad' : 'good'} />
-                        <Stat label="Members" value={`${r.totals.paid + r.totals.paid_late} / ${r.totals.members} paid`} hint={`${r.totals.partial} partial · ${r.totals.unpaid} unpaid`} />
+                        <Stat label="Members" icon={CircleCheck} tone="info" value={`${r.totals.paid + r.totals.paid_late} / ${r.totals.members} paid`} hint={`${r.totals.partial} partial · ${r.totals.unpaid} unpaid`} />
                     </div>
                     <div className="card -mx-4 overflow-x-auto p-0 sm:mx-0 sm:p-0">
                         <table className="table">
@@ -100,11 +103,11 @@ export default function MonthlyReport() {
                                         <td className="text-right">{row.required_amount.toLocaleString()}</td>
                                         <td className="text-right">{row.fine ? row.fine.toLocaleString() : '-'}</td>
                                         <td className="text-right">{row.paid.toLocaleString()}</td>
-                                        <td className={`text-right font-medium ${row.balance > 0 ? 'text-red-700' : ''}`}>{row.balance.toLocaleString()}</td>
+                                        <td className={`text-right font-medium ${row.balance > 0 ? 'text-rose-300' : ''}`}>{row.balance.toLocaleString()}</td>
                                         <td>
                                             <StatusBadge label={row.status_label} />
                                         </td>
-                                        <td className="whitespace-nowrap text-gray-600">{dateLabel(row.last_paid_at)}</td>
+                                        <td className="whitespace-nowrap text-slate-300">{dateLabel(row.last_paid_at)}</td>
                                         <td className="text-right">
                                             {row.fine > 0 && (
                                                 <button type="button" className="btn btn-secondary btn-sm whitespace-nowrap" onClick={() => waive(row)}>
@@ -127,7 +130,7 @@ export default function MonthlyReport() {
                             </tfoot>
                         </table>
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">Amounts in {cur}. Members who joined after this month are not listed.</p>
+                    <p className="mt-2 text-xs text-slate-400">Amounts in {cur}. Members who joined after this month are not listed.</p>
                 </>
             ) : null}
         </>

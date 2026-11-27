@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../useApi.js';
-import { Empty, ErrorBox, Field, Loading, MemberSelect, Modal, Notice, PageHeader, useAction } from '../components.jsx';
+import { Wallet } from 'lucide-react';
+import { Empty, ErrorBox, Field, Loading, MemberSelect, Modal, PageHeader, useAction, useConfirm, useToast } from '../components.jsx';
 import { dateLabel, money, monthEnd, thisMonth, todayIso } from '../format.js';
 
 const blank = (amount) => ({ user_id: '', amount, paid_at: todayIso(), method: 'mpesa', reference: '', period: '', note: '' });
@@ -77,13 +78,14 @@ export default function Payments() {
     const create = useAction();
     const edit = useAction();
     const [editing, setEditing] = useState(null);
-    const [saved, setSaved] = useState(null);
+    const toast = useToast();
+    const confirm = useConfirm();
 
     const record = (form, reset) =>
         create.run(async () => {
             const p = await api('/payments', { method: 'POST', body: toBody(form) });
             const months = p.applied_to.map((a) => a.period).join(', ');
-            setSaved(`Saved ${money(p.amount, group.currency)} from ${p.member_name}${months ? ` (applied to ${months})` : ' (kept as credit)'}.`);
+            toast.success(`Saved ${money(p.amount, group.currency)} from ${p.member_name}${months ? ` (applied to ${months})` : ' (kept as credit)'}.`);
             reset();
             payments.reload();
         });
@@ -97,22 +99,18 @@ export default function Payments() {
 
     const remove = (p) =>
         edit.run(async () => {
-            if (!window.confirm(`Delete ${money(p.amount, group.currency)} from ${p.member_name} on ${dateLabel(p.paid_at)}?`)) return;
+            const ok = await confirm({ title: 'Delete payment?', message: `${money(p.amount, group.currency)} from ${p.member_name} on ${dateLabel(p.paid_at)} will be removed and their months recalculated.`, confirmLabel: 'Delete', tone: 'danger' });
+            if (!ok) return;
             await api(`/payments/${p.id}`, { method: 'DELETE' });
             payments.reload();
         });
 
     return (
         <>
-            <PageHeader title="Payments" subtitle="Record deposits made to the group's M-Koba." />
+            <PageHeader icon={Wallet} title="Payments" subtitle="Record deposits made to the group's M-Koba." />
 
             <section className="card mb-6">
                 <h2 className="mb-3 font-semibold">Record a payment</h2>
-                {saved && (
-                    <div className="mb-4">
-                        <Notice onClose={() => setSaved(null)}>{saved}</Notice>
-                    </div>
-                )}
                 <PaymentForm initial={blank(group.monthly_amount)} submitLabel="Save payment" onSubmit={record} busy={create.busy} error={create.error} />
             </section>
 
@@ -149,9 +147,9 @@ export default function Payments() {
                                         <td className="whitespace-nowrap text-right">{money(p.amount, group.currency)}</td>
                                         <td className="uppercase">{p.method}</td>
                                         <td className="font-mono text-xs">{p.reference || '-'}</td>
-                                        <td className="text-xs text-gray-600">
+                                        <td className="text-xs text-slate-300">
                                             {p.applied_to.length ? p.applied_to.map((a) => `${a.period}: ${a.amount.toLocaleString()}`).join(', ') : 'Credit'}
-                                            {p.source === 'import' && <span className="ml-1 rounded bg-gray-100 px-1 text-gray-500">imported</span>}
+                                            {p.source === 'import' && <span className="ml-1 rounded bg-white/10 px-1 text-slate-400">imported</span>}
                                         </td>
                                         <td className="whitespace-nowrap text-right">
                                             <button type="button" className="btn btn-secondary btn-sm mr-1" onClick={() => setEditing(p)}>
@@ -167,7 +165,7 @@ export default function Payments() {
                         </table>
                     </div>
                 ) : (
-                    <Empty>No payments for this filter.</Empty>
+                    <Empty icon={Wallet}>No payments for this filter.</Empty>
                 )}
             </section>
 

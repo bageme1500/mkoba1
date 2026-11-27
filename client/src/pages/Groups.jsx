@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../useApi.js';
+import { Building2, Plus } from 'lucide-react';
 import { Empty, ErrorBox, Field, Loading, Modal, PageHeader, useAction } from '../components.jsx';
 import { money, ordinal } from '../format.js';
 
@@ -36,11 +37,12 @@ export default function Groups() {
     return (
         <>
             <PageHeader
+                icon={Building2}
                 title="All groups"
                 subtitle="Choose a group to manage it."
                 actions={
                     <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
-                        New group
+                        <Plus className="h-4 w-4" aria-hidden="true" /> New group
                     </button>
                 }
             />
@@ -50,9 +52,9 @@ export default function Groups() {
             ) : groups.data?.length ? (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {groups.data.map((g) => (
-                        <div key={g.id} className={`card ${current?.id === g.id ? 'ring-2 ring-brand-600' : ''}`}>
+                        <div key={g.id} className={`card ${current?.id === g.id ? 'ring-2 ring-brand-400' : ''}`}>
                             <p className="font-semibold">{g.name}</p>
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-slate-400">
                                 {g.member_count} members · {money(g.monthly_amount, g.currency)} by the {ordinal(g.due_day)}
                             </p>
                             <button type="button" className="btn btn-secondary btn-sm mt-3" onClick={() => manage(g)}>
@@ -82,7 +84,7 @@ export default function Groups() {
                                 <input className="input" type="number" min="0" step="any" value={form.late_fine} onChange={set('late_fine')} />
                             </Field>
                         </div>
-                        <p className="text-xs text-gray-500">After creating it, manage the group and add its leader under Members.</p>
+                        <p className="text-xs text-slate-400">After creating it, manage the group and add its leader under Members.</p>
                         <ErrorBox error={action.error} />
                         <button className="btn btn-primary" disabled={action.busy}>
                             Create group
