@@ -8,7 +8,8 @@
     "dev": "nodemon src/server.js",
     "migrate": "node db/migrate.js",
     "seed": "node db/seed.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "create-admin": "node db/create-admin.js"
   },
   "keywords": [],
   "author": "",
