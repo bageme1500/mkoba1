@@ -5,6 +5,7 @@ import { useApi } from '../useApi.js';
 import { Wallet } from 'lucide-react';
 import { Empty, ErrorBox, Field, Loading, MemberSelect, Modal, PageHeader, useAction, useConfirm, useToast } from '../components.jsx';
 import { dateLabel, money, monthEnd, thisMonth, todayIso } from '../format.js';
+import { ReceiptButtons } from '../receipts.jsx';
 
 const blank = (amount) => ({ user_id: '', amount, paid_at: todayIso(), method: 'mpesa', reference: '', period: '', note: '' });
 
@@ -152,6 +153,7 @@ export default function Payments() {
                                             {p.source === 'import' && <span className="ml-1 rounded bg-white/10 px-1 text-slate-400">imported</span>}
                                         </td>
                                         <td className="whitespace-nowrap text-right">
+                                            <span className="mr-1"><ReceiptButtons payment={p} group={group} /></span>
                                             <button type="button" className="btn btn-secondary btn-sm mr-1" onClick={() => setEditing(p)}>
                                                 Edit
                                             </button>

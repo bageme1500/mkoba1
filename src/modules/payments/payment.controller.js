@@ -3,6 +3,8 @@ import { withTransaction } from '../../config/db.js';
 import * as Payments from './payment.model.js';
 import * as Users from '../users/user.model.js';
 import * as Dues from '../dues/due.model.js';
+import * as Groups from '../groups/group.model.js';
+import { receiptNumber, receiptPdf } from './receipt.js';
 import { reallocateMember } from './allocation.service.js';
 import { assertCanManageGroup, resolveGroupId } from '../../middleware/auth.js';
 import { audit, money } from '../../utils/audit.js';
@@ -163,4 +165,21 @@ export async function remove(req, res) {
         });
     });
     res.status(204).end();
+}
+
+// One-page PDF receipt. Members can only get receipts for their own payments.
+export async function receipt(req, res) {
+    const payment = await Payments.findWithDetails(id.parse(req.params.id));
+    if (!payment) throw notFound('Payment not found');
+    if (req.user.role === 'member') {
+        if (payment.user_id !== req.user.id) throw notFound('Payment not found');
+    } else {
+        assertCanManageGroup(req.user, payment.group_id);
+    }
+    const group = await Groups.findById(payment.group_id);
+    const months = await Promise.all(payment.applied_to.map((a) => Dues.findStatus(a.due_id)));
+    const pdf = await receiptPdf({ payment, group, months: months.filter(Boolean) });
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', `attachment; filename="${receiptNumber(payment.id)}.pdf"`);
+    res.send(pdf);
 }

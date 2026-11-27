@@ -5,6 +5,7 @@ import { useAuth } from '../auth.jsx';
 import { useApi } from '../useApi.js';
 import { Empty, ErrorBox, Field, Loading, Modal, Notice, PageHeader, Stat, StatusBadge, useAction, useConfirm, useToast } from '../components.jsx';
 import { addMonths, dateLabel, money, monthLabel, thisMonth, todayIso } from '../format.js';
+import { countsChanged } from '../Approvals.jsx';
 
 export const CATEGORIES = {
     out: [
@@ -224,6 +225,7 @@ export default function CashBook() {
         summary.reload();
         pending.reload();
         checks.reload();
+        countsChanged();
     };
     const get = (format) => action.run(() => download('/cashbook/report', { period, format }));
     const last = s?.last_check;

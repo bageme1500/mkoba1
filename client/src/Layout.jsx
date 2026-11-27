@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from './auth.jsx';
 import { Avatar } from './components.jsx';
+import { useApprovalCounts } from './Approvals.jsx';
 
 // `mobile: true` items appear in the phone's bottom bar; the rest go under "More".
 const LEADER_LINKS = [
@@ -40,6 +41,15 @@ function useLinks() {
     return isLeader ? LEADER_LINKS : MEMBER_LINKS;
 }
 
+function Badge({ count, className = '' }) {
+    if (!count) return null;
+    return (
+        <span className={`inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] leading-5 font-semibold text-slate-950 ${className}`} aria-label={`${count} waiting`}>
+            {count}
+        </span>
+    );
+}
+
 function SideLink({ link, onClick }) {
     const Icon = link.icon;
     return (
@@ -58,7 +68,8 @@ function SideLink({ link, onClick }) {
             {({ isActive }) => (
                 <>
                     <Icon className={`h-[18px] w-[18px] ${isActive ? 'text-brand-300' : 'text-slate-500 group-hover:text-slate-300'}`} aria-hidden="true" />
-                    {link.label}
+                    <span className="flex-1">{link.label}</span>
+                    <Badge count={link.badge} />
                 </>
             )}
         </NavLink>
@@ -95,9 +106,11 @@ function UserCard() {
 }
 
 export default function Layout() {
-    const links = useLinks();
-    const [moreOpen, setMoreOpen] = useState(false);
     const location = useLocation();
+    const counts = useApprovalCounts(location.pathname);
+    const badges = { '/': (counts?.submissions || 0) + (counts?.cashbook || 0), '/cashbook': counts?.cashbook || 0 };
+    const links = useLinks().map((l) => ({ ...l, badge: badges[l.to] }));
+    const [moreOpen, setMoreOpen] = useState(false);
     const mobile = links.filter((l) => l.mobile).slice(0, 4);
     const more = links.filter((l) => !mobile.includes(l));
 
@@ -142,7 +155,10 @@ export default function Layout() {
                                 `flex min-w-14 flex-1 flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-medium transition ${isActive ? 'bg-brand-400/15 text-brand-200' : 'text-slate-400'}`
                             }
                         >
-                            <Icon className="h-5 w-5" aria-hidden="true" />
+                            <span className="relative">
+                                <Icon className="h-5 w-5" aria-hidden="true" />
+                                <Badge count={l.badge} className="absolute -top-1.5 -right-3" />
+                            </span>
                             {l.short || l.label}
                         </NavLink>
                     );

@@ -4,6 +4,7 @@ import { CircleCheck, CircleX, Copy, Hourglass, MessageCircle, Plus, Upload, Wal
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../useApi.js';
+import Approvals from '../Approvals.jsx';
 import { Avatar, Empty, ErrorBox, Loading, Notice, PageHeader, Stat, StatusBadge, useAction } from '../components.jsx';
 import { dateLabel, money, monthLabel, ordinal, thisMonth } from '../format.js';
 
@@ -67,6 +68,8 @@ export default function Dashboard() {
                     </>
                 }
             />
+
+            <Approvals onChange={() => { report.reload(); reminders.reload(); recent.reload(); }} />
 
             <div className="card mb-4">
                 <div className="flex items-baseline justify-between text-sm">

@@ -1,5 +1,6 @@
 import { CircleCheck, Clock, PiggyBank, Wallet } from 'lucide-react';
 import { Empty, Stat, StatusBadge } from './components.jsx';
+import { ReceiptButtons } from './receipts.jsx';
 import { dateLabel, money, monthLabel } from './format.js';
 
 // A member's months and payments. Used by the member's own page and by leaders.
@@ -71,6 +72,7 @@ export default function MemberRecord({ summary }) {
                                         {p.applied_to.length ? `For ${p.applied_to.map((a) => monthLabel(a.period)).join(', ')}` : 'Kept as credit'}
                                     </p>
                                 </div>
+                                <ReceiptButtons payment={p} group={group} />
                             </li>
                         ))}
                     </ul>

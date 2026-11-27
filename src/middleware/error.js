@@ -41,6 +41,8 @@ export function errorHandler(err, req, res, next) {
 
 function uniqueMessage(constraint = '') {
     if (constraint.includes('phone')) return 'A user with this phone number already exists';
+    if (constraint.includes('submissions')) return 'This M-Pesa code has already been reported and is waiting for approval';
+    if (constraint.includes('cash_entries')) return 'A cash book entry with this reference already exists';
     if (constraint.includes('reference')) return 'A payment with this reference is already recorded';
     if (constraint.includes('period')) return 'This month already exists for this member';
     return 'Already exists';
